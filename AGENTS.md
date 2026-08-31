@@ -1,0 +1,2 @@
+- See `ninegates-writeup/` under the same directory where the project folder located, for the mathematical writeup.
+- See `ninegates-lean4/` for the Lean 4 formalization of the proof. It also contains formally verified algorithms.
