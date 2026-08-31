@@ -1,121 +1,97 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useState } from 'react'
+import { addTile, removeTile, type HandCounts } from './core/hand'
+import { DEFAULT_PRESET, PRESETS } from './core/presets'
+import { HandInfo } from './components/HandInfo'
+import { LinearHandView } from './components/LinearHandView'
+import { StackedHandView } from './components/StackedHandView'
+import { TileControlRow } from './components/TileControlRow'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [counts, setCounts] = useState<HandCounts>(() => [...DEFAULT_PRESET.counts])
+  const [selectedPreset, setSelectedPreset] = useState(DEFAULT_PRESET.id)
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => !window.matchMedia('(max-width: 760px)').matches,
+  )
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
+
+      const match = /^(?:Digit|Numpad)([1-9])$/.exec(event.code)
+      if (!match) return
+      setCounts((current) => addTile(current, Number(match[1])))
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const clearHand = () => setCounts(counts.map(() => 0))
+  const handlePresetChange = (id: string) => {
+    setSelectedPreset(id)
+    const preset = PRESETS.find((item) => item.id === id)
+    if (preset) setCounts([...preset.counts])
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+    <main className="app-shell">
+      <section className="workspace" aria-label="Hand visualization workspace">
+        <LinearHandView counts={counts} />
+        <StackedHandView counts={counts} />
+        <TileControlRow
+          counts={counts}
+          onAdd={(rank) => setCounts((current) => addTile(current, rank))}
+          onRemove={(rank) => setCounts((current) => removeTile(current, rank))}
+        />
+      </section>
+
+      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <button
           type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          className="sidebar-toggle"
+          onClick={() => setSidebarOpen((open) => !open)}
+          aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          aria-expanded={sidebarOpen}
         >
-          Count is {count}
+          {sidebarOpen ? '›' : '‹'}
         </button>
-      </section>
+        {sidebarOpen && (
+          <div className="sidebar-content">
+            <div className="brand-block">
+              <span className="eyebrow">NINEGATES / VISUAL LAB</span>
+              <h1>Nine Gates<br />Hand Visualizer</h1>
+              <p>Observe and edit hands in generalized Mahjong.</p>
+            </div>
 
-      <div className="ticks"></div>
+            <section className="preset-panel" aria-labelledby="preset-title">
+              <div className="sidebar-label" id="preset-title">Hand presets</div>
+              <div className="preset-controls">
+                <select
+                  value={selectedPreset}
+                  onChange={(event) => handlePresetChange(event.target.value)}
+                  aria-label="Choose a hand preset"
+                >
+                  {PRESETS.map((preset) => (
+                    <option key={preset.id} value={preset.id}>{preset.name}</option>
+                  ))}
+                </select>
+                <button type="button" className="clear-button" onClick={clearHand}>Clear</button>
+              </div>
+            </section>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+            <HandInfo counts={counts} />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+            <div className="sidebar-footer">
+              <span>Keyboard 1—9 / NumPad adds tiles</span>
+              <span>Upper half + · lower half −</span>
+            </div>
+          </div>
+        )}
+      </aside>
+    </main>
   )
 }
 
