@@ -1,23 +1,55 @@
 import { useState } from 'react'
 import { setTileCount, type HandCounts } from './core/hand'
-import { DEFAULT_PRESET, PRESETS } from './core/presets'
+import {
+  presetsForOrder,
+  standardPreset,
+  SUPPORTED_ORDERS,
+  type Order,
+} from './core/presets'
 import { HandInfo } from './components/HandInfo'
 import { LinearHandView } from './components/LinearHandView'
 import { StackedHandView } from './components/StackedHandView'
 import './App.css'
 
+const CUSTOM_PRESET_ID = 'custom'
+const INITIAL_ORDER: Order = 3
+const INITIAL_PRESET = standardPreset(INITIAL_ORDER)
+
 function App() {
-  const [counts, setCounts] = useState<HandCounts>(() => [...DEFAULT_PRESET.counts])
-  const [selectedPreset, setSelectedPreset] = useState(DEFAULT_PRESET.id)
+  const [order, setOrder] = useState<Order>(INITIAL_ORDER)
+  const [counts, setCounts] = useState<HandCounts>(() => [...INITIAL_PRESET.counts])
+  const [selectedPreset, setSelectedPreset] = useState(INITIAL_PRESET.id)
   const [sidebarOpen, setSidebarOpen] = useState(
     () => !window.matchMedia('(max-width: 760px)').matches,
   )
 
-  const clearHand = () => setCounts(counts.map(() => 0))
+  const orderPresets = presetsForOrder(order)
+  const livePresets = orderPresets.filter((preset) => preset.waitKind === 'live')
+  const deadPresets = orderPresets.filter((preset) => preset.waitKind === 'dead')
+
+  const clearHand = () => {
+    setCounts(counts.map(() => 0))
+    setSelectedPreset(CUSTOM_PRESET_ID)
+  }
+
   const handlePresetChange = (id: string) => {
+    if (id === CUSTOM_PRESET_ID) return
     setSelectedPreset(id)
-    const preset = PRESETS.find((item) => item.id === id)
+    const preset = orderPresets.find((item) => item.id === id)
     if (preset) setCounts([...preset.counts])
+  }
+
+  const handleOrderChange = (value: number) => {
+    const nextOrder = value as Order
+    const preset = standardPreset(nextOrder)
+    setOrder(nextOrder)
+    setCounts([...preset.counts])
+    setSelectedPreset(preset.id)
+  }
+
+  const handleCountChange = (rank: number, count: number) => {
+    setCounts((current) => setTileCount(current, rank, count))
+    setSelectedPreset(CUSTOM_PRESET_ID)
   }
 
   return (
@@ -26,9 +58,7 @@ function App() {
         <LinearHandView counts={counts} />
         <StackedHandView
           counts={counts}
-          onCountChange={(rank, count) =>
-            setCounts((current) => setTileCount(current, rank, count))
-          }
+          onCountChange={handleCountChange}
         />
       </section>
 
@@ -46,9 +76,29 @@ function App() {
           <div className="sidebar-content">
             <div className="brand-block">
               <span className="eyebrow">NINEGATES / VISUAL LAB</span>
-              <h1>Nine Gates<br />Hand Visualizer</h1>
+              <h1>Nine Gates<br />Visualizer</h1>
               <p>Observe and edit hands in generalized Mahjong.</p>
             </div>
+
+            <section className="order-panel" aria-labelledby="order-title">
+              <div className="sidebar-label" id="order-title">Order n</div>
+              <div className="order-control">
+                <output htmlFor="order-slider">n = {order}</output>
+                <input
+                  id="order-slider"
+                  type="range"
+                  min="1"
+                  max="4"
+                  step="1"
+                  value={order}
+                  onChange={(event) => handleOrderChange(Number(event.target.value))}
+                  aria-label="Generalized Mahjong order"
+                />
+                <div className="order-ticks" aria-hidden="true">
+                  {SUPPORTED_ORDERS.map((value) => <span key={value}>{value}</span>)}
+                </div>
+              </div>
+            </section>
 
             <section className="preset-panel" aria-labelledby="preset-title">
               <div className="sidebar-label" id="preset-title">Hand presets</div>
@@ -58,9 +108,19 @@ function App() {
                   onChange={(event) => handlePresetChange(event.target.value)}
                   aria-label="Choose a hand preset"
                 >
-                  {PRESETS.map((preset) => (
-                    <option key={preset.id} value={preset.id}>{preset.name}</option>
-                  ))}
+                  <option value={CUSTOM_PRESET_ID} disabled>Custom hand</option>
+                  <optgroup label="Live full-sided">
+                    {livePresets.map((preset) => (
+                      <option key={preset.id} value={preset.id}>{preset.name}</option>
+                    ))}
+                  </optgroup>
+                  {deadPresets.length > 0 && (
+                    <optgroup label="Full-sided, dead wait">
+                      {deadPresets.map((preset) => (
+                        <option key={preset.id} value={preset.id}>{preset.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
                 <button type="button" className="clear-button" onClick={clearHand}>Clear</button>
               </div>

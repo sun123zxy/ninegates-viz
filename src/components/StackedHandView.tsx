@@ -1,5 +1,9 @@
 import { useRef, type CSSProperties } from 'react'
-import { MAX_EDITABLE_TILE_COUNT, type HandCounts } from '../core/hand'
+import {
+  MAX_EDITABLE_TILE_COUNT,
+  STANDARD_TILE_LIMIT,
+  type HandCounts,
+} from '../core/hand'
 import { MahjongTile } from './MahjongTile'
 
 type StackedHandViewProps = {
@@ -39,7 +43,11 @@ export function StackedHandView({ counts, onCountChange }: StackedHandViewProps)
         <div
           className="stacked-grid"
           ref={gridRef}
-          style={{ '--rank-count': counts.length } as CSSProperties}
+          style={{
+            '--rank-count': counts.length,
+            '--stack-level-count': MAX_EDITABLE_TILE_COUNT,
+            '--over-limit-level-count': MAX_EDITABLE_TILE_COUNT - STANDARD_TILE_LIMIT,
+          } as CSSProperties}
           aria-label="Six-level tile grid"
         >
           {counts.flatMap((count, index) =>

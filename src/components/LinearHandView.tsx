@@ -6,14 +6,16 @@ type LinearHandViewProps = {
 }
 
 export function LinearHandView({ counts }: LinearHandViewProps) {
+  const ranks = expandHand(counts)
+
   return (
     <section className="view-card linear-view" aria-label="Linear hand view">
       <div className="linear-scroll" aria-label="Hand in ascending rank order">
         <div className="linear-hand">
-          {expandHand(counts).map((rank, index) => (
+          {ranks.map((rank, index) => (
             <MahjongTile key={`${rank}-${index}`} rank={rank} />
           ))}
-          {expandHand(counts).length === 0 && <span className="empty-hint">No tiles</span>}
+          {ranks.length === 0 && <span className="empty-hint">No tiles</span>}
         </div>
       </div>
     </section>

@@ -26,9 +26,6 @@
   border-radius: 1.1rem;
   background: rgba(255, 253, 248, 0.66);
   box-shadow: 0 0.6rem 2.4rem rgba(67, 52, 32, 0.07);
-}
-
-.view-card {
   overflow: hidden;
 }
 
@@ -45,11 +42,37 @@
   width: var(--tile-width, clamp(2.35rem, 4.5vw, 4.55rem));
   aspect-ratio: 1573 / 2457;
   flex: 0 0 auto;
-  display: block;
-  background-repeat: no-repeat;
-  background-size: 900% 100%;
-  filter: drop-shadow(0 0.18rem 0.16rem rgba(40, 28, 13, 0.13));
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #705f4a;
+  border-radius: clamp(0.16rem, 0.32vw, 0.28rem);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(236, 228, 212, 0.86)),
+    #fffdf8;
+  box-shadow:
+    inset 0 0 0 0.14rem rgba(255, 255, 255, 0.7),
+    0 0.16rem 0.18rem rgba(40, 28, 13, 0.16);
   user-select: none;
+}
+
+.tile-rank {
+  position: absolute;
+  top: 15%;
+  color: #30271e;
+  font: 900 calc(var(--tile-width) * 0.39) / 1.05 'KaiTi', 'STKaiti', serif;
+  -webkit-text-stroke: 0.01em currentColor;
+}
+
+.tile-suit {
+  position: absolute;
+  top: 65%;
+  color: #b52d28;
+  font: 900 calc(var(--tile-width) * 0.48) / 1 'KaiTi', 'STKaiti', serif;
+  -webkit-text-stroke: 0.01em currentColor;
+  text-shadow: 0 0.04rem 0 rgba(111, 21, 19, 0.15);
+  transform: translateY(-50%);
 }
 
 .linear-scroll,
@@ -96,7 +119,7 @@
   width: max-content;
   display: grid;
   grid-template-columns: repeat(var(--rank-count), var(--tile-width));
-  grid-template-rows: repeat(6, var(--tile-height));
+  grid-template-rows: repeat(var(--stack-level-count), var(--tile-height));
   column-gap: var(--grid-gap);
 }
 
@@ -123,7 +146,7 @@
 .standard-tile-limit {
   position: absolute;
   z-index: 2;
-  top: calc(2 * var(--tile-height));
+  top: calc(var(--over-limit-level-count) * var(--tile-height));
   right: 0;
   left: 0;
   border-top: 2px dashed rgba(172, 53, 45, 0.78);
@@ -215,10 +238,36 @@
   line-height: 1.7;
 }
 
+.order-panel,
 .preset-panel,
 .info-panel {
   border-top: 1px solid rgba(77, 59, 36, 0.16);
   padding-top: 1rem;
+}
+
+.order-control {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.order-control output {
+  color: #463828;
+  font: 700 0.88rem var(--mono);
+}
+
+.order-control input {
+  width: 100%;
+  margin: 0;
+  accent-color: #a24d2b;
+  cursor: pointer;
+}
+
+.order-ticks {
+  display: flex;
+  justify-content: space-between;
+  color: #8b7d6a;
+  font: 0.68rem var(--mono);
 }
 
 .preset-controls {

@@ -1,7 +1,7 @@
 export type HandCounts = readonly number[]
 
-export const DEFAULT_RANK_COUNT = 9
 export const MAX_EDITABLE_TILE_COUNT = 6
+export const STANDARD_TILE_LIMIT = 4
 
 function assertRank(counts: HandCounts, rank: number) {
   if (!Number.isInteger(rank) || rank < 1 || rank > counts.length) {
@@ -33,8 +33,4 @@ export function formatVector(counts: HandCounts): string {
 
 export function formatMultiset(counts: HandCounts): string {
   return `{${expandHand(counts).join(', ')}}`
-}
-
-export function emptyHand(rankCount = DEFAULT_RANK_COUNT): number[] {
-  return Array.from({ length: rankCount }, () => 0)
 }
