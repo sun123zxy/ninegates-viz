@@ -2,9 +2,10 @@ import { formatMultiset, formatVector, totalTiles, type HandCounts } from '../co
 
 type HandInfoProps = {
   counts: HandCounts
+  waitingTiles?: readonly number[]
 }
 
-export function HandInfo({ counts }: HandInfoProps) {
+export function HandInfo({ counts, waitingTiles }: HandInfoProps) {
   return (
     <section className="info-panel" aria-labelledby="info-title">
       <div className="sidebar-label" id="info-title">Hand information</div>
@@ -21,6 +22,12 @@ export function HandInfo({ counts }: HandInfoProps) {
           <dt>Hand</dt>
           <dd>{formatMultiset(counts)}</dd>
         </div>
+        {waitingTiles && (
+          <div>
+            <dt>Waiting tiles</dt>
+            <dd>{waitingTiles.length === 0 ? '∅' : waitingTiles.join(', ')}</dd>
+          </div>
+        )}
       </dl>
     </section>
   )

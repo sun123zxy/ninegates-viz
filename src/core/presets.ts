@@ -73,7 +73,7 @@ export const PRESETS: readonly HandPreset[] = [
   dead('n4-c', 'C — Full-sided, dead wait', 4,
     [1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 3, 0]),
   dead('n4-rc', 'R(C) — Full-sided, dead wait', 4,
-    [0, 3, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1]),
+    [0, 3, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1]),
   dead('n4-d', 'D — Full-sided, dead wait', 4,
     [0, 1, 4, 2, 1, 1, 1, 1, 1, 1, 3, 0]),
   dead('n4-rd', 'R(D) — Full-sided, dead wait', 4,

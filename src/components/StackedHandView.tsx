@@ -9,6 +9,7 @@ import { MahjongTile } from './MahjongTile'
 type StackedHandViewProps = {
   counts: HandCounts
   onCountChange: (rank: number, count: number) => void
+  waitingTiles?: readonly number[]
 }
 
 type DragState = {
@@ -16,7 +17,7 @@ type DragState = {
   rank: number
 }
 
-export function StackedHandView({ counts, onCountChange }: StackedHandViewProps) {
+export function StackedHandView({ counts, onCountChange, waitingTiles }: StackedHandViewProps) {
   const gridRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<DragState | null>(null)
 
@@ -54,9 +55,15 @@ export function StackedHandView({ counts, onCountChange }: StackedHandViewProps)
             Array.from({ length: MAX_EDITABLE_TILE_COUNT }, (_, levelIndex) => {
               const level = MAX_EDITABLE_TILE_COUNT - levelIndex
               const isFilled = level <= count
+              const isWaitingTarget =
+                waitingTiles?.includes(index + 1) &&
+                count < MAX_EDITABLE_TILE_COUNT &&
+                level === count + 1
               return (
                 <div
-                  className={`stack-cell ${isFilled ? 'stack-cell-filled' : 'stack-cell-empty'}`}
+                  className={`stack-cell ${isFilled ? 'stack-cell-filled' : 'stack-cell-empty'}${
+                    isWaitingTarget ? ' stack-cell-waiting-target' : ''
+                  }`}
                   key={`${index + 1}-${level}`}
                   style={{ gridColumn: index + 1, gridRow: levelIndex + 1 }}
                   aria-hidden="true"
