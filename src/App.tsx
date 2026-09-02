@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
-import { addTile, removeTile, type HandCounts } from './core/hand'
+import { useState } from 'react'
+import { setTileCount, type HandCounts } from './core/hand'
 import { DEFAULT_PRESET, PRESETS } from './core/presets'
 import { HandInfo } from './components/HandInfo'
 import { LinearHandView } from './components/LinearHandView'
 import { StackedHandView } from './components/StackedHandView'
-import { TileControlRow } from './components/TileControlRow'
 import './App.css'
 
 function App() {
@@ -13,21 +12,6 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(
     () => !window.matchMedia('(max-width: 760px)').matches,
   )
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return
-      const target = event.target as HTMLElement | null
-      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
-
-      const match = /^(?:Digit|Numpad)([1-9])$/.exec(event.code)
-      if (!match) return
-      setCounts((current) => addTile(current, Number(match[1])))
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   const clearHand = () => setCounts(counts.map(() => 0))
   const handlePresetChange = (id: string) => {
@@ -40,11 +24,11 @@ function App() {
     <main className="app-shell">
       <section className="workspace" aria-label="Hand visualization workspace">
         <LinearHandView counts={counts} />
-        <StackedHandView counts={counts} />
-        <TileControlRow
+        <StackedHandView
           counts={counts}
-          onAdd={(rank) => setCounts((current) => addTile(current, rank))}
-          onRemove={(rank) => setCounts((current) => removeTile(current, rank))}
+          onCountChange={(rank, count) =>
+            setCounts((current) => setTileCount(current, rank, count))
+          }
         />
       </section>
 
@@ -85,8 +69,8 @@ function App() {
             <HandInfo counts={counts} />
 
             <div className="sidebar-footer">
-              <span>Keyboard 1—9 / NumPad adds tiles</span>
-              <span>Upper half + · lower half −</span>
+              <span>Click or drag a stack to set its height</span>
+              <span>↑ ↓ / Home / End work on a focused stack</span>
             </div>
           </div>
         )}

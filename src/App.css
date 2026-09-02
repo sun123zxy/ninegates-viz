@@ -11,16 +11,16 @@
 
 .workspace {
   min-width: 0;
-  --tile-width: clamp(2rem, 3.825vw, 3.87rem);
+  --tile-width: clamp(1.24rem, 3.72vw, 3.1rem);
+  --tile-height: calc(var(--tile-width) * 2457 / 1573);
   padding: clamp(1rem, 2vw, 2rem);
   display: grid;
-  grid-template-rows: auto minmax(8rem, 1fr) auto;
+  grid-template-rows: auto minmax(8rem, 1fr);
   gap: clamp(0.7rem, 1.4vw, 1.25rem);
   overflow: hidden;
 }
 
-.view-card,
-.controls-card {
+.view-card {
   min-height: 0;
   border: 1px solid rgba(77, 59, 36, 0.18);
   border-radius: 1.1rem;
@@ -53,8 +53,7 @@
 }
 
 .linear-scroll,
-.stacked-scroll,
-.controls-scroll {
+.stacked-scroll {
   min-width: 0;
   scrollbar-color: rgba(122, 88, 46, 0.45) transparent;
   scrollbar-width: thin;
@@ -86,143 +85,62 @@
 .stacked-scroll {
   height: 100%;
   overflow: auto;
-  padding: 0.5rem 1rem 0;
-}
-
-.rank-grid {
-  width: max-content;
   display: grid;
-  grid-template-columns: repeat(9, var(--tile-width));
-  column-gap: calc(var(--tile-width) * 0.05);
-  margin-inline: auto;
+  place-items: center;
+  padding: 0.75rem 1rem;
 }
 
 .stacked-grid {
-  min-height: 100%;
-  align-items: end;
-  row-gap: 0;
+  --grid-gap: calc(var(--tile-width) * 0.05);
+  position: relative;
+  width: max-content;
+  display: grid;
+  grid-template-columns: repeat(var(--rank-count), var(--tile-width));
+  grid-template-rows: repeat(6, var(--tile-height));
+  column-gap: var(--grid-gap);
 }
 
-.stack-column {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
-  justify-content: flex-start;
-  row-gap: calc(var(--tile-width) * 0.05);
-}
-
-.controls-card {
+.stack-cell {
+  position: relative;
+  width: var(--tile-width);
+  height: var(--tile-height);
   overflow: hidden;
 }
 
-.controls-scroll {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.55rem 1rem 0.85rem;
+.stack-cell-empty {
+  border: 1px solid rgba(113, 91, 59, 0.15);
+  background:
+    linear-gradient(135deg, transparent 48%, rgba(126, 99, 62, 0.07) 49%,
+      rgba(126, 99, 62, 0.07) 51%, transparent 52%),
+    rgba(255, 253, 248, 0.28);
 }
 
-.control-grid {
-  align-items: center;
-}
-
-.tile-control {
-  position: relative;
-  width: var(--tile-width);
-  justify-self: center;
-  aspect-ratio: 1573 / 2457;
-}
-
-.control-tile {
-  position: absolute;
-  inset: 0;
+.stack-cell-filled .mahjong-tile {
   width: 100%;
+  height: 100%;
 }
 
-.control-zone {
-  position: absolute;
-  z-index: 1;
-  left: 0;
-  width: 100%;
-  height: 50%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  color: rgba(47, 43, 37, 0.68);
-  font: 800 1.45rem/1 var(--sans);
-  opacity: 1;
-  transition: color 140ms ease, background 140ms ease;
-}
-
-.control-zone span {
-  position: absolute;
-  left: 50%;
-  width: 1.35rem;
-  height: 1.35rem;
-  transform: translateX(-50%);
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(255, 250, 241, 0.58);
-  text-shadow: 0 0.08rem 0.2rem rgba(255, 255, 255, 0.95);
-}
-
-.control-add {
-  top: 0;
-  border-radius: 0.55rem 0.55rem 0 0;
-}
-
-.control-add span {
-  top: 0.18rem;
-}
-
-.control-remove {
-  bottom: 0;
-  border-radius: 0 0 0.55rem 0.55rem;
-}
-
-.control-remove span {
-  bottom: 0.18rem;
-}
-
-.control-add:hover,
-.control-add:focus-visible {
-  color: #157043;
-  background: linear-gradient(to bottom, rgba(84, 197, 126, 0.47), transparent 88%);
-}
-
-.control-remove:hover:not(:disabled),
-.control-remove:focus-visible:not(:disabled) {
-  color: #a83e32;
-  background: linear-gradient(to top, rgba(225, 109, 89, 0.47), transparent 88%);
-}
-
-.control-zone:focus-visible {
-  outline: 2px solid #1f5a75;
-  outline-offset: -2px;
-}
-
-.control-remove:disabled {
-  color: rgba(47, 43, 37, 0.2);
-  cursor: not-allowed;
-}
-
-.control-count {
+.standard-tile-limit {
   position: absolute;
   z-index: 2;
-  right: -0.42rem;
-  top: -0.42rem;
-  min-width: 1.2rem;
-  height: 1.2rem;
-  border: 1px solid rgba(91, 63, 32, 0.2);
-  border-radius: 999px;
-  color: #68553d;
-  background: #fffaf1;
-  box-shadow: 0 0.12rem 0.35rem rgba(55, 37, 17, 0.12);
-  font: 700 0.68rem/1.1rem var(--mono);
-  text-align: center;
+  top: calc(2 * var(--tile-height));
+  right: 0;
+  left: 0;
+  border-top: 2px dashed rgba(172, 53, 45, 0.78);
+  pointer-events: none;
+}
+
+.stack-column-slider {
+  z-index: 3;
+  grid-row: 1 / -1;
+  min-width: 0;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.stack-column-slider:focus-visible {
+  outline: 2px solid #1f5a75;
+  outline-offset: 0.2rem;
 }
 
 .sidebar {
@@ -385,8 +303,7 @@
   }
 
   .linear-scroll,
-  .stacked-scroll,
-  .controls-scroll {
+  .stacked-scroll {
     padding-left: 0.7rem;
     padding-right: 0.7rem;
   }

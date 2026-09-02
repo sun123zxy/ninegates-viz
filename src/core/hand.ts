@@ -1,6 +1,7 @@
 export type HandCounts = readonly number[]
 
 export const DEFAULT_RANK_COUNT = 9
+export const MAX_EDITABLE_TILE_COUNT = 6
 
 function assertRank(counts: HandCounts, rank: number) {
   if (!Number.isInteger(rank) || rank < 1 || rank > counts.length) {
@@ -8,17 +9,13 @@ function assertRank(counts: HandCounts, rank: number) {
   }
 }
 
-export function addTile(counts: HandCounts, rank: number): number[] {
+export function setTileCount(counts: HandCounts, rank: number, count: number): number[] {
   assertRank(counts, rank)
+  if (!Number.isInteger(count) || count < 0 || count > MAX_EDITABLE_TILE_COUNT) {
+    throw new RangeError(`count must be an integer between 0 and ${MAX_EDITABLE_TILE_COUNT}`)
+  }
   const next = [...counts]
-  next[rank - 1] += 1
-  return next
-}
-
-export function removeTile(counts: HandCounts, rank: number): number[] {
-  assertRank(counts, rank)
-  const next = [...counts]
-  next[rank - 1] = Math.max(0, next[rank - 1] - 1)
+  next[rank - 1] = count
   return next
 }
 
