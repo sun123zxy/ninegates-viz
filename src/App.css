@@ -473,6 +473,11 @@
   font: 0.75rem/1.55 var(--mono);
 }
 
+.analysis-warning {
+  color: #b52d28;
+  font-weight: 700;
+}
+
 .sidebar-footer {
   display: grid;
   gap: 0.35rem;

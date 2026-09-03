@@ -29,9 +29,17 @@ try {
     triplets: [1, 3],
     pair: 2,
   })
+  assert.deepEqual(analyzeHand([2, 0, 0]), {
+    kind: 'winning',
+    decomposition: { sequences: [], triplets: [], pair: 1 },
+  })
   assert.deepEqual(analyzeHand([3, 1, 3]), {
     kind: 'waiting',
     waitingTiles: [1, 2, 3],
+  })
+  assert.deepEqual(analyzeHand([1, 0, 0]), {
+    kind: 'waiting',
+    waitingTiles: [1],
   })
   assert.deepEqual(winningDecomposition([3, 1, 1, 1, 2, 1, 1, 1, 3]), {
     sequences: [2, 6],

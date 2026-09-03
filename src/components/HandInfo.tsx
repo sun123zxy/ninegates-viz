@@ -20,6 +20,13 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
   const decomposition = analysis.kind === 'meldable' || analysis.kind === 'winning'
     ? analysis.decomposition
     : undefined
+  const expectedMeldCount = counts.length / 3 + 1
+  const waitingMeldCount = (totalTiles(counts) - 1) / 3
+  const winningMeldCount = decomposition
+    ? decomposition.sequences.length + decomposition.triplets.length
+    : 0
+  const waitingIsNonStandard = analysis.kind === 'waiting' && waitingMeldCount !== expectedMeldCount
+  const winningIsNonStandard = analysis.kind === 'winning' && winningMeldCount !== expectedMeldCount
 
   return (
     <section className="info-panel" aria-label="Hand information">
@@ -40,7 +47,11 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
           <>
             <div>
               <dt>Hand analysis</dt>
-              <dd>Waiting</dd>
+              <dd>
+                Waiting — <span className={waitingIsNonStandard ? 'analysis-warning' : undefined}>
+                  {waitingMeldCount} melds
+                </span> + 1 pair
+              </dd>
             </div>
             <div>
               <dt>Waiting tiles</dt>
@@ -56,8 +67,12 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
         )}
         {analysis.kind === 'winning' && (
           <div>
-            <dt>Hand analysis</dt>
-            <dd>Winning</dd>
+              <dt>Hand analysis</dt>
+              <dd>
+                Winning — <span className={winningIsNonStandard ? 'analysis-warning' : undefined}>
+                  {winningMeldCount} melds
+                </span> + 1 pair
+              </dd>
           </div>
         )}
         {analysis.kind === 'not-meldable' && (
@@ -82,13 +97,13 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
           <div>
             <dt>Decomposition</dt>
             <dd>
-              seq: {decomposition.sequences.length === 0
+              {decomposition.sequences.length === 0
                 ? '—'
                 : decomposition.sequences.map(sequenceRanks).join(', ')};{' '}
-              trip: {decomposition.triplets.length === 0
+              {decomposition.triplets.length === 0
                 ? '—'
                 : decomposition.triplets.map((rank) => repeatedRank(rank, 3)).join(', ')};{' '}
-              pair: {decomposition.pair === undefined ? '—' : repeatedRank(decomposition.pair, 2)}
+              {decomposition.pair === undefined ? '—' : repeatedRank(decomposition.pair, 2)}
             </dd>
           </div>
         )}

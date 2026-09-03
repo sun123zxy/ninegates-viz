@@ -91,12 +91,12 @@ function buildSuffix(counts: HandCounts): number[] {
 
 /**
  * Returns one-indexed ranks that become winning after one tile is added.
- * `null` means the hand has the wrong size to be a wait.
+ * `null` means the hand has a tile count incompatible with a wait.
  *
  * This is a TypeScript port of `WaitingTiles.Decidable.decideCount` in Lean.
  */
 export function waitingTiles(counts: HandCounts): number[] | null {
-  if (totalTiles(counts) !== counts.length + 4) return null
+  if (totalTiles(counts) % 3 !== 1) return null
 
   const prefix = buildPrefix(counts)
   const suffix = buildSuffix(counts)
@@ -145,16 +145,13 @@ export function meldDecomposition(counts: HandCounts): HandDecomposition | null 
 }
 
 /**
- * Returns a deterministic winning decomposition.
+ * Returns a deterministic pair-and-meld decomposition.
  *
  * The smallest rank that can serve as the pair is selected; after removing
- * it, the remaining hand uses the canonical meld scan above. This gives a
- * concrete witness for Lean's `Winning` predicate while keeping the display
- * stable when a hand has several valid decompositions.
+ * it, the remaining hand uses the canonical meld scan above. This keeps the
+ * display stable when a hand has several valid decompositions.
  */
 export function winningDecomposition(counts: HandCounts): HandDecomposition | null {
-  if (totalTiles(counts) !== counts.length + 5) return null
-
   for (let index = 0; index < counts.length; index += 1) {
     if (counts[index] < 2) continue
     const withoutPair = [...counts]
@@ -169,17 +166,18 @@ export function winningDecomposition(counts: HandCounts): HandDecomposition | nu
 /**
  * Selects the applicable mathematical analysis from the hand's tile count.
  *
- * The rank count is `3n` in the UI: `3n + 4` is a waiting hand and `3n + 5`
- * is a winning hand. Other multiples of three are checked for meldability.
+ * Every hand with a tile count congruent to one modulo three is checked for
+ * waiting tiles; those congruent to two modulo three are checked for a pair-
+ * and-meld decomposition; multiples of three are checked for meldability.
  */
 export function analyzeHand(counts: HandCounts): HandAnalysis {
   const total = totalTiles(counts)
 
-  if (total === counts.length + 4) {
+  if (total % 3 === 1) {
     return { kind: 'waiting', waitingTiles: waitingTiles(counts) ?? [] }
   }
 
-  if (total === counts.length + 5) {
+  if (total % 3 === 2) {
     const decomposition = winningDecomposition(counts)
     return decomposition ? { kind: 'winning', decomposition } : { kind: 'not-winning' }
   }
