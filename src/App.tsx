@@ -21,7 +21,7 @@ import './App.css'
 const CUSTOM_PRESET_ID = 'custom'
 const INITIAL_ORDER: Order = 3
 const INITIAL_PRESET = standardPreset(INITIAL_ORDER)
-const GITHUB_URL = 'https://github.com/sun123zxy/ninegates-webtools'
+const GITHUB_URL = 'https://github.com/sun123zxy/ninegates-viz'
 
 type HandSnapshot = {
   order: Order

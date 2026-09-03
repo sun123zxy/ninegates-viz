@@ -1,6 +1,6 @@
-# Ninegate Web Tools
+# NinegatesViz
 
-Some visualizations for the Ninegates project.
+A visualization of the generalized $3n$-rank Mahjong game. Part of the Ninegates project.
 
 - easily edit a hand by clicking on the grid
 - meldable / winning hand detection and decomposition
