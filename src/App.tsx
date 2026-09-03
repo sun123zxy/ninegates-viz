@@ -142,7 +142,7 @@ function App() {
 
             <div className="sidebar-footer">
               <span>Click or drag a stack to set its height</span>
-              <span>↑ ↓ / Home / End work on a focused stack</span>
+              <span>← → switch stacks; ↑ ↓ / Home / End edit a focused stack</span>
             </div>
           </div>
         )}

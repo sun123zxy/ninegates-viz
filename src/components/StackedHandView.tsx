@@ -20,6 +20,11 @@ type DragState = {
 export function StackedHandView({ counts, onCountChange, waitingTiles }: StackedHandViewProps) {
   const gridRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<DragState | null>(null)
+  const sliderRefs = useRef<Array<HTMLDivElement | null>>([])
+
+  const focusAdjacentStack = (rank: number, direction: -1 | 1) => {
+    sliderRefs.current[rank - 1 + direction]?.focus()
+  }
 
   const countAtPointer = (clientY: number) => {
     const grid = gridRef.current
@@ -80,6 +85,9 @@ export function StackedHandView({ counts, onCountChange, waitingTiles }: Stacked
               <div
                 className="stack-column-slider"
                 key={rank}
+                ref={(element) => {
+                  sliderRefs.current[index] = element
+                }}
                 role="slider"
                 tabIndex={0}
                 aria-label={`Rank ${rank} tile count`}
@@ -111,7 +119,11 @@ export function StackedHandView({ counts, onCountChange, waitingTiles }: Stacked
                   }
                 }}
                 onKeyDown={(event) => {
-                  if (event.key === 'ArrowUp') {
+                  if (event.key === 'ArrowLeft') {
+                    focusAdjacentStack(rank, -1)
+                  } else if (event.key === 'ArrowRight') {
+                    focusAdjacentStack(rank, 1)
+                  } else if (event.key === 'ArrowUp') {
                     onCountChange(rank, Math.min(count + 1, MAX_EDITABLE_TILE_COUNT))
                   } else if (event.key === 'ArrowDown') {
                     onCountChange(rank, Math.max(count - 1, 0))
