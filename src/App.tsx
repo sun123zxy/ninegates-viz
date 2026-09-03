@@ -9,7 +9,7 @@ import {
 import { HandInfo } from './components/HandInfo'
 import { LinearHandView } from './components/LinearHandView'
 import { StackedHandView } from './components/StackedHandView'
-import { waitingTilesPlugin } from './plugins/waitingTiles'
+import { handAnalysisPlugin } from './plugins/waitingTiles'
 import './App.css'
 
 const CUSTOM_PRESET_ID = 'custom'
@@ -20,7 +20,6 @@ function App() {
   const [order, setOrder] = useState<Order>(INITIAL_ORDER)
   const [counts, setCounts] = useState<HandCounts>(() => [...INITIAL_PRESET.counts])
   const [selectedPreset, setSelectedPreset] = useState(INITIAL_PRESET.id)
-  const [waitingTilesEnabled, setWaitingTilesEnabled] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(
     () => !window.matchMedia('(max-width: 760px)').matches,
   )
@@ -28,9 +27,10 @@ function App() {
   const orderPresets = presetsForOrder(order)
   const livePresets = orderPresets.filter((preset) => preset.waitKind === 'live')
   const deadPresets = orderPresets.filter((preset) => preset.waitKind === 'dead')
-  const calculatedWaitingTiles = waitingTilesEnabled
-    ? waitingTilesPlugin.calculate(counts)
-    : null
+  const analysis = handAnalysisPlugin.calculate(counts)
+  const decomposition = analysis.kind === 'meldable' || analysis.kind === 'winning'
+    ? analysis.decomposition
+    : undefined
 
   const clearHand = () => {
     setCounts(counts.map(() => 0))
@@ -64,7 +64,8 @@ function App() {
         <StackedHandView
           counts={counts}
           onCountChange={handleCountChange}
-          waitingTiles={calculatedWaitingTiles ?? undefined}
+          waitingTiles={analysis.kind === 'waiting' ? analysis.waitingTiles : undefined}
+          decomposition={decomposition}
         />
       </section>
 
@@ -126,19 +127,7 @@ function App() {
               </div>
             </section>
 
-            <section className="algorithms-panel" aria-labelledby="algorithms-title">
-              <div className="sidebar-label" id="algorithms-title">Algorithms</div>
-              <label className="algorithm-toggle">
-                <input
-                  type="checkbox"
-                  checked={waitingTilesEnabled}
-                  onChange={(event) => setWaitingTilesEnabled(event.target.checked)}
-                />
-                <span>{waitingTilesPlugin.label}</span>
-              </label>
-            </section>
-
-            <HandInfo counts={counts} waitingTiles={calculatedWaitingTiles ?? undefined} />
+            <HandInfo counts={counts} analysis={analysis} />
 
             <div className="sidebar-footer">
               <span>Click or drag a stack to set its height</span>

@@ -161,6 +161,66 @@
   pointer-events: none;
 }
 
+.decomposition-overlay {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.decomposition-line-outline,
+.decomposition-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.decomposition-line-outline {
+  stroke: rgba(255, 255, 255, 0.88);
+  stroke-width: clamp(0.34rem, 0.62vw, 0.52rem);
+}
+
+.decomposition-line {
+  stroke-width: clamp(0.18rem, 0.33vw, 0.28rem);
+  stroke: rgba(255, 255, 255, 0.86);
+}
+
+.decomposition-line-seq {
+  stroke: #138a8a;
+  filter: drop-shadow(0 0 0.08rem rgba(255, 255, 255, 0.9));
+}
+
+.decomposition-line-trip {
+  stroke: #b87816;
+  filter: drop-shadow(0 0 0.08rem rgba(255, 255, 255, 0.9));
+}
+
+.decomposition-line-pair {
+  stroke: #7b4ca0;
+  filter: drop-shadow(0 0 0.08rem rgba(255, 255, 255, 0.9));
+}
+
+.decomposition-endpoint {
+  r: clamp(0.17rem, 0.32vw, 0.27rem);
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: clamp(0.08rem, 0.14vw, 0.12rem);
+}
+
+.decomposition-endpoint-seq {
+  fill: #138a8a;
+}
+
+.decomposition-endpoint-trip {
+  fill: #b87816;
+}
+
+.decomposition-endpoint-pair {
+  fill: #7b4ca0;
+}
+
 .stack-column-slider {
   z-index: 3;
   grid-row: 1 / -1;
