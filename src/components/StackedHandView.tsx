@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { Fragment, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   MAX_EDITABLE_TILE_COUNT,
   STANDARD_TILE_LIMIT,
@@ -112,8 +112,10 @@ export function StackedHandView({
     if (!grid) return 0
 
     const rect = grid.getBoundingClientRect()
-    const rowHeight = rect.height / MAX_EDITABLE_TILE_COUNT
-    const heightFromBottom = rect.bottom - clientY
+    const cell = grid.querySelector<HTMLElement>('.stack-cell')
+    const rowHeight = cell?.offsetHeight ?? rect.height / MAX_EDITABLE_TILE_COUNT
+    const tileGridBottom = rect.top + rowHeight * MAX_EDITABLE_TILE_COUNT
+    const heightFromBottom = tileGridBottom - clientY
     return Math.min(
       MAX_EDITABLE_TILE_COUNT,
       Math.max(0, Math.ceil(heightFromBottom / rowHeight)),
@@ -186,70 +188,92 @@ export function StackedHandView({
           {counts.map((count, index) => {
             const rank = index + 1
             return (
-              <div
-                className="stack-column-slider"
-                key={rank}
-                ref={(element) => {
-                  sliderRefs.current[index] = element
-                }}
-                role="slider"
-                tabIndex={0}
-                aria-label={`Rank ${rank} tile count`}
-                aria-valuemin={0}
-                aria-valuemax={MAX_EDITABLE_TILE_COUNT}
-                aria-valuenow={count}
-                aria-valuetext={`${count} ${count === 1 ? 'tile' : 'tiles'}`}
-                style={{ gridColumn: rank }}
-                onPointerDown={(event) => {
-                  if (event.pointerType === 'mouse' && event.button !== 0) return
-                  event.currentTarget.setPointerCapture(event.pointerId)
-                  dragRef.current = { pointerId: event.pointerId, rank }
-                  onEditStart()
-                  updateFromPointer(rank, event.clientY)
-                }}
-                onPointerMove={(event) => {
-                  const drag = dragRef.current
-                  if (drag?.pointerId === event.pointerId) {
-                    updateFromPointer(drag.rank, event.clientY)
-                  }
-                }}
-                onPointerUp={(event) => {
-                  if (dragRef.current?.pointerId === event.pointerId) {
-                    dragRef.current = null
-                    onEditEnd()
-                  }
-                }}
-                onPointerCancel={(event) => {
-                  if (dragRef.current?.pointerId === event.pointerId) {
-                    dragRef.current = null
-                    onEditEnd()
-                  }
-                }}
-                onLostPointerCapture={() => {
-                  if (dragRef.current?.rank === rank) {
-                    dragRef.current = null
-                    onEditEnd()
-                  }
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'ArrowLeft') {
-                    focusAdjacentStack(rank, -1)
-                  } else if (event.key === 'ArrowRight') {
-                    focusAdjacentStack(rank, 1)
-                  } else if (event.key === 'ArrowUp') {
-                    onCountChange(rank, Math.min(count + 1, MAX_EDITABLE_TILE_COUNT))
-                  } else if (event.key === 'ArrowDown') {
-                    onCountChange(rank, Math.max(count - 1, 0))
-                  } else if (event.key === 'Home') {
-                    onCountChange(rank, 0)
-                  } else if (event.key === 'End') {
-                    onCountChange(rank, MAX_EDITABLE_TILE_COUNT)
-                  } else {
-                    return
-                  }
-                  event.preventDefault()
-                }}
-              />
+              <Fragment key={rank}>
+                <div
+                  className="stack-column-slider"
+                  ref={(element) => {
+                    sliderRefs.current[index] = element
+                  }}
+                  role="slider"
+                  tabIndex={0}
+                  aria-label={`Rank ${rank} tile count`}
+                  aria-valuemin={0}
+                  aria-valuemax={MAX_EDITABLE_TILE_COUNT}
+                  aria-valuenow={count}
+                  aria-valuetext={`${count} ${count === 1 ? 'tile' : 'tiles'}`}
+                  style={{ gridColumn: rank, gridRow: `1 / ${MAX_EDITABLE_TILE_COUNT + 1}` }}
+                  onPointerDown={(event) => {
+                    if (event.pointerType === 'mouse' && event.button !== 0) return
+                    event.currentTarget.setPointerCapture(event.pointerId)
+                    dragRef.current = { pointerId: event.pointerId, rank }
+                    onEditStart()
+                    updateFromPointer(rank, event.clientY)
+                  }}
+                  onPointerMove={(event) => {
+                    const drag = dragRef.current
+                    if (drag?.pointerId === event.pointerId) {
+                      updateFromPointer(drag.rank, event.clientY)
+                    }
+                  }}
+                  onPointerUp={(event) => {
+                    if (dragRef.current?.pointerId === event.pointerId) {
+                      dragRef.current = null
+                      onEditEnd()
+                    }
+                  }}
+                  onPointerCancel={(event) => {
+                    if (dragRef.current?.pointerId === event.pointerId) {
+                      dragRef.current = null
+                      onEditEnd()
+                    }
+                  }}
+                  onLostPointerCapture={() => {
+                    if (dragRef.current?.rank === rank) {
+                      dragRef.current = null
+                      onEditEnd()
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'ArrowLeft') {
+                      focusAdjacentStack(rank, -1)
+                    } else if (event.key === 'ArrowRight') {
+                      focusAdjacentStack(rank, 1)
+                    } else if (event.key === 'ArrowUp') {
+                      onCountChange(rank, Math.min(count + 1, MAX_EDITABLE_TILE_COUNT))
+                    } else if (event.key === 'ArrowDown') {
+                      onCountChange(rank, Math.max(count - 1, 0))
+                    } else if (event.key === 'Home') {
+                      onCountChange(rank, 0)
+                    } else if (event.key === 'End') {
+                      onCountChange(rank, MAX_EDITABLE_TILE_COUNT)
+                    } else {
+                      return
+                    }
+                    event.preventDefault()
+                  }}
+                />
+                <div
+                  className="stack-stepper"
+                  style={{ gridColumn: rank, gridRow: MAX_EDITABLE_TILE_COUNT + 1 }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onCountChange(rank, Math.min(count + 1, MAX_EDITABLE_TILE_COUNT))}
+                    disabled={count === MAX_EDITABLE_TILE_COUNT}
+                    aria-label={`Increase rank ${rank} tile count`}
+                  >
+                    ▴
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onCountChange(rank, Math.max(count - 1, 0))}
+                    disabled={count === 0}
+                    aria-label={`Decrease rank ${rank} tile count`}
+                  >
+                    ▾
+                  </button>
+                </div>
+              </Fragment>
             )
           })}
         </div>

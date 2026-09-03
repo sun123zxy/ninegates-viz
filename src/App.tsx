@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { setTileCount } from './core/hand'
 import {
-  HISTORY_LIMIT,
   commitHistory,
   createHistory,
   redoHistory,
   undoHistory,
-  type History,
 } from './core/history'
 import {
   presetsForOrder,
@@ -36,10 +34,6 @@ function sameHand(left: HandSnapshot, right: HandSnapshot): boolean {
     left.selectedPreset === right.selectedPreset &&
     left.counts.length === right.counts.length &&
     left.counts.every((count, index) => count === right.counts[index])
-}
-
-function appendTransactionStart(history: History<HandSnapshot>, start: HandSnapshot) {
-  return [...history.past, start].slice(-HISTORY_LIMIT)
 }
 
 function GitHubLink() {
@@ -103,11 +97,7 @@ function App() {
     if (!start) return
     setHistory((current) => {
       if (sameHand(start, current.present)) return current
-      return {
-        past: appendTransactionStart(current, start),
-        present: current.present,
-        future: [],
-      }
+      return commitHistory({ ...current, present: start }, current.present, sameHand)
     })
   }
 
@@ -193,11 +183,8 @@ function App() {
         {sidebarOpen && (
           <div className="sidebar-content">
             <div className="brand-block">
-              <h1>
-                <span className="brand-name">Ninegates</span>
-                <span className="brand-subtitle">Visualization</span>
-              </h1>
-              <GitHubLink />
+              <h1><span className="brand-name">NinegatesViz</span></h1>
+              <span className="brand-subtitle">A Mahjong game visualizer</span>
             </div>
 
             <section className="order-panel" aria-label="Order">
@@ -271,9 +258,13 @@ function App() {
             <HandInfo counts={counts} analysis={analysis} />
 
             <div className="sidebar-footer">
-              <span>Click or drag a stack to set its height</span>
-              <span>← → switch stacks; ↑ ↓ / Home / End edit a focused stack</span>
-              <span>Ctrl/⌘+Z undo; Ctrl+Y or Ctrl/⌘+Shift+Z redo</span>
+              <div className="sidebar-footer-copy">
+                <span>Click or drag a stack to set its height</span>
+                <span>← → switch stacks</span>
+                <span>↑ ↓ / Home / End edit a focused stack</span>
+                <span>Ctrl+Z undo; Ctrl+Y or Ctrl+Shift+Z redo</span>
+              </div>
+              <GitHubLink />
             </div>
           </div>
         )}

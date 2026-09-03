@@ -12,10 +12,9 @@ export type HandDecomposition = {
 export type HandAnalysis =
   | { kind: 'meldable'; decomposition: HandDecomposition }
   | { kind: 'not-meldable' }
-  | { kind: 'waiting'; waitingTiles: readonly number[] }
-  | { kind: 'winning'; decomposition: HandDecomposition }
+  | { kind: 'waiting'; waitingTiles: readonly number[]; meldCount: number; isStandard: boolean }
+  | { kind: 'winning'; decomposition: HandDecomposition; meldCount: number; isStandard: boolean }
   | { kind: 'not-winning' }
-  | { kind: 'none' }
 
 const STATE_COUNT = 18
 const INITIAL_STATE = encodeState(0, 0, false)
@@ -172,22 +171,32 @@ export function winningDecomposition(counts: HandCounts): HandDecomposition | nu
  */
 export function analyzeHand(counts: HandCounts): HandAnalysis {
   const total = totalTiles(counts)
+  const standardMeldCount = counts.length / 3 + 1
 
   if (total % 3 === 1) {
-    return { kind: 'waiting', waitingTiles: waitingTiles(counts) ?? [] }
+    const meldCount = (total - 1) / 3
+    return {
+      kind: 'waiting',
+      waitingTiles: waitingTiles(counts) ?? [],
+      meldCount,
+      isStandard: meldCount === standardMeldCount,
+    }
   }
 
   if (total % 3 === 2) {
     const decomposition = winningDecomposition(counts)
-    return decomposition ? { kind: 'winning', decomposition } : { kind: 'not-winning' }
+    if (!decomposition) return { kind: 'not-winning' }
+    const meldCount = decomposition.sequences.length + decomposition.triplets.length
+    return {
+      kind: 'winning',
+      decomposition,
+      meldCount,
+      isStandard: meldCount === standardMeldCount,
+    }
   }
 
-  if (total % 3 === 0) {
-    const decomposition = meldDecomposition(counts)
-    return decomposition ? { kind: 'meldable', decomposition } : { kind: 'not-meldable' }
-  }
-
-  return { kind: 'none' }
+  const decomposition = meldDecomposition(counts)
+  return decomposition ? { kind: 'meldable', decomposition } : { kind: 'not-meldable' }
 }
 
 export const handAnalysisPlugin = {

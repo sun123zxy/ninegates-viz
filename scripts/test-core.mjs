@@ -32,14 +32,20 @@ try {
   assert.deepEqual(analyzeHand([2, 0, 0]), {
     kind: 'winning',
     decomposition: { sequences: [], triplets: [], pair: 1 },
+    meldCount: 0,
+    isStandard: false,
   })
   assert.deepEqual(analyzeHand([3, 1, 3]), {
     kind: 'waiting',
     waitingTiles: [1, 2, 3],
+    meldCount: 2,
+    isStandard: true,
   })
   assert.deepEqual(analyzeHand([1, 0, 0]), {
     kind: 'waiting',
     waitingTiles: [1],
+    meldCount: 0,
+    isStandard: false,
   })
   assert.deepEqual(winningDecomposition([3, 1, 1, 1, 2, 1, 1, 1, 3]), {
     sequences: [2, 6],
@@ -64,7 +70,7 @@ try {
   assert.equal(cappedHistory.past.length, HISTORY_LIMIT)
   assert.equal(cappedHistory.past[0], 1)
 
-  console.log('hand-analysis checks passed')
+  console.log('core checks passed')
 } finally {
   await server.close()
 }

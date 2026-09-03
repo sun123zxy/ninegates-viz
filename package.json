@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node scripts/test-hand-analysis.mjs",
+    "test": "node scripts/test-core.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

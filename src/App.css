@@ -106,11 +106,12 @@
 
 .stacked-grid {
   --grid-gap: calc(var(--tile-width) * 0.05);
+  --stack-control-height: 1.85rem;
   position: relative;
   width: max-content;
   display: grid;
   grid-template-columns: repeat(var(--rank-count), var(--tile-width));
-  grid-template-rows: repeat(var(--stack-level-count), var(--tile-height));
+  grid-template-rows: repeat(var(--stack-level-count), var(--tile-height)) var(--stack-control-height);
   column-gap: var(--grid-gap);
 }
 
@@ -226,6 +227,42 @@
   outline-offset: 0.2rem;
 }
 
+.stack-stepper {
+  position: relative;
+  z-index: 4;
+  align-self: center;
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  justify-items: center;
+}
+
+.stack-stepper button {
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  color: rgba(112, 91, 61, 0.46);
+  background: transparent;
+  cursor: pointer;
+  font: 700 1rem / 0.76rem var(--sans);
+  transform: scale(1.32, 0.72);
+}
+
+.stack-stepper button:hover:not(:disabled),
+.stack-stepper button:focus-visible:not(:disabled) {
+  color: #a24d2b;
+}
+
+.stack-stepper button:focus-visible {
+  outline: 1px solid #1f5a75;
+  outline-offset: -0.08rem;
+}
+
+.stack-stepper button:disabled {
+  color: rgba(112, 91, 61, 0.16);
+  cursor: default;
+}
+
 .sidebar {
   position: relative;
   min-width: 0;
@@ -282,31 +319,29 @@
   padding: clamp(1.25rem, 2.3vw, 2.3rem) clamp(1rem, 2.3vw, 2rem);
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  gap: 1rem;
 }
 
 .brand-block {
   flex: 0 0 auto;
   position: relative;
-  padding: 0.15rem 0.1rem 0.75rem;
+  padding: 0.15rem 0.1rem;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.8rem;
-  border-bottom: 1px solid rgba(162, 77, 43, 0.22);
+  gap: 1.2rem;
 }
 
 .brand-block h1 {
   margin: 0;
   display: grid;
-  gap: 0.68rem;
+  gap: 0rem;
 }
 
 .brand-name {
   color: #30271e;
   font: 700 clamp(1.85rem, 2.8vw, 2.65rem) / 0.92 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
   letter-spacing: -0.035em;
-  text-shadow: 0 0.06rem 0 rgba(255, 255, 255, 0.84);
 }
 
 .brand-subtitle {
@@ -331,23 +366,6 @@
 .preset-panel,
 .sidebar-footer {
   flex: 0 0 auto;
-}
-
-.algorithm-toggle {
-  margin-top: 0.65rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #463828;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.algorithm-toggle input {
-  width: 1rem;
-  height: 1rem;
-  margin: 0;
-  accent-color: #25844c;
 }
 
 .order-control {
@@ -479,10 +497,23 @@
 }
 
 .sidebar-footer {
-  display: grid;
-  gap: 0.35rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
   color: #9b8d79;
   font: 0.65rem/1.45 var(--mono);
+}
+
+.sidebar-footer-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.sidebar-footer .github-link {
+  flex: 0 0 auto;
+  margin: 0;
 }
 
 .github-link {

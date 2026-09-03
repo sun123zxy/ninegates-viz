@@ -20,13 +20,6 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
   const decomposition = analysis.kind === 'meldable' || analysis.kind === 'winning'
     ? analysis.decomposition
     : undefined
-  const expectedMeldCount = counts.length / 3 + 1
-  const waitingMeldCount = (totalTiles(counts) - 1) / 3
-  const winningMeldCount = decomposition
-    ? decomposition.sequences.length + decomposition.triplets.length
-    : 0
-  const waitingIsNonStandard = analysis.kind === 'waiting' && waitingMeldCount !== expectedMeldCount
-  const winningIsNonStandard = analysis.kind === 'winning' && winningMeldCount !== expectedMeldCount
 
   return (
     <section className="info-panel" aria-label="Hand information">
@@ -48,8 +41,8 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
             <div>
               <dt>Hand analysis</dt>
               <dd>
-                Waiting — <span className={waitingIsNonStandard ? 'analysis-warning' : undefined}>
-                  {waitingMeldCount} melds
+                Waiting — <span className={analysis.isStandard ? undefined : 'analysis-warning'}>
+                  {analysis.meldCount} melds
                 </span> + 1 pair
               </dd>
             </div>
@@ -67,12 +60,12 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
         )}
         {analysis.kind === 'winning' && (
           <div>
-              <dt>Hand analysis</dt>
-              <dd>
-                Winning — <span className={winningIsNonStandard ? 'analysis-warning' : undefined}>
-                  {winningMeldCount} melds
-                </span> + 1 pair
-              </dd>
+            <dt>Hand analysis</dt>
+            <dd>
+              Winning — <span className={analysis.isStandard ? undefined : 'analysis-warning'}>
+                {analysis.meldCount} melds
+              </span> + 1 pair
+            </dd>
           </div>
         )}
         {analysis.kind === 'not-meldable' && (
@@ -85,12 +78,6 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
           <div>
             <dt>Hand analysis</dt>
             <dd>Not a winning hand</dd>
-          </div>
-        )}
-        {analysis.kind === 'none' && (
-          <div>
-            <dt>Hand analysis</dt>
-            <dd>Not applicable for this tile count</dd>
           </div>
         )}
         {decomposition && (
