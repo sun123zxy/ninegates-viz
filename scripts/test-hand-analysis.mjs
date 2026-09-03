@@ -11,6 +11,8 @@ const server = await createServer({
 try {
   const { analyzeHand, meldDecomposition, winningDecomposition } =
     await server.ssrLoadModule('/src/plugins/waitingTiles.ts')
+  const { HISTORY_LIMIT, commitHistory, createHistory, redoHistory, undoHistory } =
+    await server.ssrLoadModule('/src/core/history.ts')
 
   assert.deepEqual(meldDecomposition([1, 1, 1]), {
     sequences: [1],
@@ -38,6 +40,21 @@ try {
   })
   assert.deepEqual(analyzeHand([1, 0, 2]), { kind: 'not-meldable' })
   assert.deepEqual(analyzeHand([7, 1, 0]), { kind: 'not-winning' })
+
+  const equal = (left, right) => left === right
+  let history = createHistory(1)
+  history = commitHistory(history, 2, equal)
+  history = commitHistory(history, 3, equal)
+  assert.equal(undoHistory(history).present, 2)
+  assert.equal(redoHistory(undoHistory(history)).present, 3)
+  assert.equal(commitHistory(undoHistory(history), 4, equal).future.length, 0)
+
+  let cappedHistory = createHistory(0)
+  for (let value = 1; value <= HISTORY_LIMIT + 1; value += 1) {
+    cappedHistory = commitHistory(cappedHistory, value, equal)
+  }
+  assert.equal(cappedHistory.past.length, HISTORY_LIMIT)
+  assert.equal(cappedHistory.past[0], 1)
 
   console.log('hand-analysis checks passed')
 } finally {

@@ -29,14 +29,6 @@
   overflow: hidden;
 }
 
-.sidebar-label {
-  display: block;
-  color: #a24d2b;
-  font: 700 0.65rem/1.2 var(--mono);
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
 .mahjong-tile {
   width: var(--tile-width, clamp(2.35rem, 4.5vw, 4.55rem));
   aspect-ratio: 1573 / 2457;
@@ -284,20 +276,61 @@
 
 .sidebar-content {
   height: 100%;
+  min-height: 0;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow: hidden;
   padding: clamp(1.25rem, 2.3vw, 2.3rem) clamp(1rem, 2.3vw, 2rem);
   display: flex;
   flex-direction: column;
   gap: 1.6rem;
 }
 
+.brand-block {
+  flex: 0 0 auto;
+  position: relative;
+  padding: 0.15rem 0.1rem 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border-bottom: 1px solid rgba(162, 77, 43, 0.22);
+}
+
+.brand-block h1 {
+  margin: 0;
+  display: grid;
+  gap: 0.68rem;
+}
+
+.brand-name {
+  color: #30271e;
+  font: 700 clamp(1.85rem, 2.8vw, 2.65rem) / 0.92 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  letter-spacing: -0.035em;
+  text-shadow: 0 0.06rem 0 rgba(255, 255, 255, 0.84);
+}
+
+.brand-subtitle {
+  color: #a24d2b;
+  font: 700 0.58rem / 1.2 var(--mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.brand-block .github-link {
+  margin-top: 0;
+}
+
 .order-panel,
 .preset-panel,
-.algorithms-panel,
 .info-panel {
   border-top: 1px solid rgba(77, 59, 36, 0.16);
   padding-top: 1rem;
+}
+
+.order-panel,
+.preset-panel,
+.sidebar-footer {
+  flex: 0 0 auto;
 }
 
 .algorithm-toggle {
@@ -318,7 +351,6 @@
 }
 
 .order-control {
-  margin-top: 0.65rem;
   display: grid;
   gap: 0.4rem;
 }
@@ -343,7 +375,6 @@
 }
 
 .preset-controls {
-  margin-top: 0.65rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.55rem;
@@ -382,10 +413,47 @@
   outline-offset: 2px;
 }
 
+.history-controls {
+  margin-top: 0.55rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.history-controls button {
+  min-height: 2rem;
+  border: 1px solid rgba(77, 59, 36, 0.25);
+  border-radius: 0.45rem;
+  color: #5f4f3b;
+  background: transparent;
+  cursor: pointer;
+  font: 0.74rem var(--sans);
+}
+
+.history-controls button:hover:not(:disabled),
+.history-controls button:focus-visible:not(:disabled) {
+  background: #fff3df;
+}
+
+.history-controls button:disabled {
+  cursor: not-allowed;
+  color: #b8ad9e;
+  border-color: rgba(77, 59, 36, 0.12);
+}
+
 .info-list {
-  margin: 0.7rem 0 0;
+  margin: 0;
   display: grid;
   gap: 0.65rem;
+}
+
+.info-panel {
+  min-height: 0;
+  flex: 1 1 0;
+  overflow-y: auto;
+  padding-right: 0.3rem;
+  scrollbar-color: rgba(122, 88, 46, 0.45) transparent;
+  scrollbar-width: thin;
 }
 
 .info-list div {
@@ -406,11 +474,34 @@
 }
 
 .sidebar-footer {
-  margin-top: auto;
   display: grid;
   gap: 0.35rem;
   color: #9b8d79;
   font: 0.65rem/1.45 var(--mono);
+}
+
+.github-link {
+  width: 1.7rem;
+  height: 1.7rem;
+  margin-top: 0.35rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(77, 59, 36, 0.2);
+  border-radius: 0.45rem;
+  color: #5e4834;
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.github-link:hover,
+.github-link:focus-visible {
+  color: #9a4126;
+  background: #fff3df;
+}
+
+.github-link svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
 }
 
 @media (max-width: 760px) {

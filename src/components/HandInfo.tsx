@@ -22,8 +22,7 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
     : undefined
 
   return (
-    <section className="info-panel" aria-labelledby="info-title">
-      <div className="sidebar-label" id="info-title">Hand information</div>
+    <section className="info-panel" aria-label="Hand information">
       <dl className="info-list">
         <div>
           <dt>Tile count</dt>
@@ -80,24 +79,18 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
           </div>
         )}
         {decomposition && (
-          <>
-            <div>
-              <dt>seq</dt>
-              <dd>{decomposition.sequences.length === 0
+          <div>
+            <dt>Decomposition</dt>
+            <dd>
+              seq: {decomposition.sequences.length === 0
                 ? '—'
-                : decomposition.sequences.map(sequenceRanks).join(', ')}</dd>
-            </div>
-            <div>
-              <dt>trip</dt>
-              <dd>{decomposition.triplets.length === 0
+                : decomposition.sequences.map(sequenceRanks).join(', ')};{' '}
+              trip: {decomposition.triplets.length === 0
                 ? '—'
-                : decomposition.triplets.map((rank) => repeatedRank(rank, 3)).join(', ')}</dd>
-            </div>
-            <div>
-              <dt>pair</dt>
-              <dd>{decomposition.pair === undefined ? '—' : repeatedRank(decomposition.pair, 2)}</dd>
-            </div>
-          </>
+                : decomposition.triplets.map((rank) => repeatedRank(rank, 3)).join(', ')};{' '}
+              pair: {decomposition.pair === undefined ? '—' : repeatedRank(decomposition.pair, 2)}
+            </dd>
+          </div>
         )}
       </dl>
     </section>

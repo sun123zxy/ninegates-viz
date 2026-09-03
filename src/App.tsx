@@ -1,5 +1,13 @@
-import { useState } from 'react'
-import { setTileCount, type HandCounts } from './core/hand'
+import { useEffect, useRef, useState } from 'react'
+import { setTileCount } from './core/hand'
+import {
+  HISTORY_LIMIT,
+  commitHistory,
+  createHistory,
+  redoHistory,
+  undoHistory,
+  type History,
+} from './core/history'
 import {
   presetsForOrder,
   standardPreset,
@@ -15,14 +23,54 @@ import './App.css'
 const CUSTOM_PRESET_ID = 'custom'
 const INITIAL_ORDER: Order = 3
 const INITIAL_PRESET = standardPreset(INITIAL_ORDER)
+const GITHUB_URL = 'https://github.com/sun123zxy/ninegates-webtools'
+
+type HandSnapshot = {
+  order: Order
+  counts: number[]
+  selectedPreset: string
+}
+
+function sameHand(left: HandSnapshot, right: HandSnapshot): boolean {
+  return left.order === right.order &&
+    left.selectedPreset === right.selectedPreset &&
+    left.counts.length === right.counts.length &&
+    left.counts.every((count, index) => count === right.counts[index])
+}
+
+function appendTransactionStart(history: History<HandSnapshot>, start: HandSnapshot) {
+  return [...history.past, start].slice(-HISTORY_LIMIT)
+}
+
+function GitHubLink() {
+  return (
+    <a
+      className="github-link"
+      href={GITHUB_URL}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="Open the Ninegates Web Tools repository on GitHub"
+      title="View on GitHub"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 1.6a10.4 10.4 0 0 0-3.3 20.26c.52.1.7-.22.7-.5v-2c-2.87.62-3.47-1.22-3.47-1.22-.47-1.18-1.14-1.5-1.14-1.5-.93-.64.07-.63.07-.63 1.03.07 1.57 1.05 1.57 1.05.91 1.55 2.4 1.1 2.98.84.09-.66.36-1.1.65-1.36-2.29-.26-4.7-1.14-4.7-5.08 0-1.12.4-2.03 1.05-2.75-.1-.26-.46-1.3.1-2.72 0 0 .86-.27 2.78 1.05a9.63 9.63 0 0 1 5.06 0c1.92-1.32 2.78-1.05 2.78-1.05.56 1.42.2 2.46.1 2.72.65.72 1.05 1.63 1.05 2.75 0 3.95-2.42 4.81-4.72 5.07.37.32.7.92.7 1.86v2.75c0 .28.18.6.7.5A10.4 10.4 0 0 0 12 1.6Z" />
+      </svg>
+    </a>
+  )
+}
 
 function App() {
-  const [order, setOrder] = useState<Order>(INITIAL_ORDER)
-  const [counts, setCounts] = useState<HandCounts>(() => [...INITIAL_PRESET.counts])
-  const [selectedPreset, setSelectedPreset] = useState(INITIAL_PRESET.id)
+  const [history, setHistory] = useState(() => createHistory<HandSnapshot>({
+    order: INITIAL_ORDER,
+    counts: [...INITIAL_PRESET.counts],
+    selectedPreset: INITIAL_PRESET.id,
+  }))
   const [sidebarOpen, setSidebarOpen] = useState(
     () => !window.matchMedia('(max-width: 760px)').matches,
   )
+  const transactionStartRef = useRef<HandSnapshot | null>(null)
+
+  const { order, counts, selectedPreset } = history.present
 
   const orderPresets = presetsForOrder(order)
   const livePresets = orderPresets.filter((preset) => preset.waitKind === 'live')
@@ -32,29 +80,90 @@ function App() {
     ? analysis.decomposition
     : undefined
 
+  const updateHand = (update: (current: HandSnapshot) => HandSnapshot) => {
+    setHistory((current) => {
+      const next = update(current.present)
+      if (transactionStartRef.current) {
+        return sameHand(current.present, next) ? current : { ...current, present: next }
+      }
+      return commitHistory(current, next, sameHand)
+    })
+  }
+
+  const beginHistoryTransaction = () => {
+    setHistory((current) => {
+      transactionStartRef.current ??= current.present
+      return current
+    })
+  }
+
+  const finishHistoryTransaction = () => {
+    const start = transactionStartRef.current
+    transactionStartRef.current = null
+    if (!start) return
+    setHistory((current) => {
+      if (sameHand(start, current.present)) return current
+      return {
+        past: appendTransactionStart(current, start),
+        present: current.present,
+        future: [],
+      }
+    })
+  }
+
+  const undo = () => setHistory(undoHistory)
+  const redo = () => setHistory(redoHistory)
+
+  useEffect(() => {
+    const handleHistoryShortcut = (event: KeyboardEvent) => {
+      if (!event.ctrlKey && !event.metaKey) return
+      const key = event.key.toLowerCase()
+      const isUndo = key === 'z' && !event.shiftKey
+      const isRedo = key === 'y' || (key === 'z' && event.shiftKey)
+      if (!isUndo && !isRedo) return
+      event.preventDefault()
+      if (isUndo) undo()
+      if (isRedo) redo()
+    }
+
+    window.addEventListener('keydown', handleHistoryShortcut)
+    return () => window.removeEventListener('keydown', handleHistoryShortcut)
+  }, [])
+
   const clearHand = () => {
-    setCounts(counts.map(() => 0))
-    setSelectedPreset(CUSTOM_PRESET_ID)
+    updateHand((current) => ({
+      ...current,
+      counts: current.counts.map(() => 0),
+      selectedPreset: CUSTOM_PRESET_ID,
+    }))
   }
 
   const handlePresetChange = (id: string) => {
     if (id === CUSTOM_PRESET_ID) return
-    setSelectedPreset(id)
-    const preset = orderPresets.find((item) => item.id === id)
-    if (preset) setCounts([...preset.counts])
+    updateHand((current) => {
+      const preset = presetsForOrder(current.order).find((item) => item.id === id)
+      return preset
+        ? { ...current, counts: [...preset.counts], selectedPreset: preset.id }
+        : current
+    })
   }
 
   const handleOrderChange = (value: number) => {
     const nextOrder = value as Order
     const preset = standardPreset(nextOrder)
-    setOrder(nextOrder)
-    setCounts([...preset.counts])
-    setSelectedPreset(preset.id)
+    updateHand(() => ({
+      order: nextOrder,
+      counts: [...preset.counts],
+      selectedPreset: preset.id,
+    }))
   }
 
   const handleCountChange = (rank: number, count: number) => {
-    setCounts((current) => setTileCount(current, rank, count))
-    setSelectedPreset(CUSTOM_PRESET_ID)
+    updateHand((current) => ({
+      ...current,
+      counts: setTileCount(current.counts, rank, count),
+      selectedPreset: CUSTOM_PRESET_ID,
+    }))
   }
 
   return (
@@ -64,6 +173,8 @@ function App() {
         <StackedHandView
           counts={counts}
           onCountChange={handleCountChange}
+          onEditStart={beginHistoryTransaction}
+          onEditEnd={finishHistoryTransaction}
           waitingTiles={analysis.kind === 'waiting' ? analysis.waitingTiles : undefined}
           decomposition={decomposition}
         />
@@ -81,8 +192,15 @@ function App() {
         </button>
         {sidebarOpen && (
           <div className="sidebar-content">
-            <section className="order-panel" aria-labelledby="order-title">
-              <div className="sidebar-label" id="order-title">Order n</div>
+            <div className="brand-block">
+              <h1>
+                <span className="brand-name">Ninegates</span>
+                <span className="brand-subtitle">Visualization</span>
+              </h1>
+              <GitHubLink />
+            </div>
+
+            <section className="order-panel" aria-label="Order">
               <div className="order-control">
                 <output htmlFor="order-slider">n = {order}</output>
                 <input
@@ -93,6 +211,10 @@ function App() {
                   step="1"
                   value={order}
                   onChange={(event) => handleOrderChange(Number(event.target.value))}
+                  onPointerDown={beginHistoryTransaction}
+                  onPointerUp={finishHistoryTransaction}
+                  onPointerCancel={finishHistoryTransaction}
+                  onLostPointerCapture={finishHistoryTransaction}
                   aria-label="Generalized Mahjong order"
                 />
                 <div className="order-ticks" aria-hidden="true">
@@ -101,8 +223,7 @@ function App() {
               </div>
             </section>
 
-            <section className="preset-panel" aria-labelledby="preset-title">
-              <div className="sidebar-label" id="preset-title">Hand presets</div>
+            <section className="preset-panel" aria-label="Hand presets">
               <div className="preset-controls">
                 <select
                   value={selectedPreset}
@@ -125,6 +246,26 @@ function App() {
                 </select>
                 <button type="button" className="clear-button" onClick={clearHand}>Clear</button>
               </div>
+              <div className="history-controls">
+                <button
+                  type="button"
+                  onClick={undo}
+                  disabled={history.past.length === 0}
+                  title="Undo (Ctrl/⌘+Z)"
+                  aria-keyshortcuts="Control+Z Meta+Z"
+                >
+                  Undo
+                </button>
+                <button
+                  type="button"
+                  onClick={redo}
+                  disabled={history.future.length === 0}
+                  title="Redo (Ctrl+Y / Ctrl/⌘+Shift+Z)"
+                  aria-keyshortcuts="Control+Y Control+Shift+Z Meta+Shift+Z"
+                >
+                  Redo
+                </button>
+              </div>
             </section>
 
             <HandInfo counts={counts} analysis={analysis} />
@@ -132,6 +273,7 @@ function App() {
             <div className="sidebar-footer">
               <span>Click or drag a stack to set its height</span>
               <span>← → switch stacks; ↑ ↓ / Home / End edit a focused stack</span>
+              <span>Ctrl/⌘+Z undo; Ctrl+Y or Ctrl/⌘+Shift+Z redo</span>
             </div>
           </div>
         )}

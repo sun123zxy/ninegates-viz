@@ -10,6 +10,8 @@ import { MahjongTile } from './MahjongTile'
 type StackedHandViewProps = {
   counts: HandCounts
   onCountChange: (rank: number, count: number) => void
+  onEditStart: () => void
+  onEditEnd: () => void
   waitingTiles?: readonly number[]
   decomposition?: HandDecomposition
 }
@@ -50,7 +52,14 @@ function buildDecompositionLines(decomposition: HandDecomposition): Decompositio
   }))
 }
 
-export function StackedHandView({ counts, onCountChange, waitingTiles, decomposition }: StackedHandViewProps) {
+export function StackedHandView({
+  counts,
+  onCountChange,
+  onEditStart,
+  onEditEnd,
+  waitingTiles,
+  decomposition,
+}: StackedHandViewProps) {
   const gridRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<DragState | null>(null)
   const sliderRefs = useRef<Array<HTMLDivElement | null>>([])
@@ -195,6 +204,7 @@ export function StackedHandView({ counts, onCountChange, waitingTiles, decomposi
                   if (event.pointerType === 'mouse' && event.button !== 0) return
                   event.currentTarget.setPointerCapture(event.pointerId)
                   dragRef.current = { pointerId: event.pointerId, rank }
+                  onEditStart()
                   updateFromPointer(rank, event.clientY)
                 }}
                 onPointerMove={(event) => {
@@ -206,11 +216,19 @@ export function StackedHandView({ counts, onCountChange, waitingTiles, decomposi
                 onPointerUp={(event) => {
                   if (dragRef.current?.pointerId === event.pointerId) {
                     dragRef.current = null
+                    onEditEnd()
                   }
                 }}
                 onPointerCancel={(event) => {
                   if (dragRef.current?.pointerId === event.pointerId) {
                     dragRef.current = null
+                    onEditEnd()
+                  }
+                }}
+                onLostPointerCapture={() => {
+                  if (dragRef.current?.rank === rank) {
+                    dragRef.current = null
+                    onEditEnd()
                   }
                 }}
                 onKeyDown={(event) => {
