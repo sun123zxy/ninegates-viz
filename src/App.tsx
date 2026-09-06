@@ -13,21 +13,19 @@ import {
   type Order,
 } from './core/presets'
 import { InfoTabs } from './components/InfoTabs'
+import { HandToolbar } from './components/HandToolbar'
 import { LinearHandView } from './components/LinearHandView'
 import { StackedHandView } from './components/StackedHandView'
 import { INFO_PLUGINS } from './plugins/info'
 import type { HandOverlay } from './plugins/types'
 import './App.css'
 
-const CUSTOM_PRESET_ID = 'custom'
 const INITIAL_ORDER: Order = 3
 const INITIAL_PRESET = standardPreset(INITIAL_ORDER)
-const GITHUB_URL = 'https://github.com/sun123zxy/ninegates-viz'
 
 type HandSnapshot = {
   order: Order
   counts: number[]
-  selectedPreset: string
 }
 
 type PreviewOverlay = {
@@ -38,33 +36,14 @@ type PreviewOverlay = {
 
 function sameHand(left: HandSnapshot, right: HandSnapshot): boolean {
   return left.order === right.order &&
-    left.selectedPreset === right.selectedPreset &&
     left.counts.length === right.counts.length &&
     left.counts.every((count, index) => count === right.counts[index])
-}
-
-function GitHubLink() {
-  return (
-    <a
-      className="github-link"
-      href={GITHUB_URL}
-      target="_blank"
-      rel="noreferrer"
-      aria-label="Open the Ninegates Web Tools repository on GitHub"
-      title="View on GitHub"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 1.6a10.4 10.4 0 0 0-3.3 20.26c.52.1.7-.22.7-.5v-2c-2.87.62-3.47-1.22-3.47-1.22-.47-1.18-1.14-1.5-1.14-1.5-.93-.64.07-.63.07-.63 1.03.07 1.57 1.05 1.57 1.05.91 1.55 2.4 1.1 2.98.84.09-.66.36-1.1.65-1.36-2.29-.26-4.7-1.14-4.7-5.08 0-1.12.4-2.03 1.05-2.75-.1-.26-.46-1.3.1-2.72 0 0 .86-.27 2.78 1.05a9.63 9.63 0 0 1 5.06 0c1.92-1.32 2.78-1.05 2.78-1.05.56 1.42.2 2.46.1 2.72.65.72 1.05 1.63 1.05 2.75 0 3.95-2.42 4.81-4.72 5.07.37.32.7.92.7 1.86v2.75c0 .28.18.6.7.5A10.4 10.4 0 0 0 12 1.6Z" />
-      </svg>
-    </a>
-  )
 }
 
 function App() {
   const [history, setHistory] = useState(() => createHistory<HandSnapshot>({
     order: INITIAL_ORDER,
     counts: [...INITIAL_PRESET.counts],
-    selectedPreset: INITIAL_PRESET.id,
   }))
   const [sidebarOpen, setSidebarOpen] = useState(
     () => !window.matchMedia('(max-width: 760px)').matches,
@@ -73,11 +52,9 @@ function App() {
   const [previewOverlay, setPreviewOverlay] = useState<PreviewOverlay | null>(null)
   const transactionStartRef = useRef<HandSnapshot | null>(null)
 
-  const { order, counts, selectedPreset } = history.present
+  const { order, counts } = history.present
 
   const orderPresets = presetsForOrder(order)
-  const livePresets = orderPresets.filter((preset) => preset.waitKind === 'live')
-  const deadPresets = orderPresets.filter((preset) => preset.waitKind === 'dead')
   const activeInfoPlugin = INFO_PLUGINS.find((plugin) => plugin.id === activeInfoPluginId)
     ?? INFO_PLUGINS[0]
   const activeInfoResult = useMemo(
@@ -128,6 +105,10 @@ function App() {
   useEffect(() => {
     const handleHistoryShortcut = (event: KeyboardEvent) => {
       if (!event.ctrlKey && !event.metaKey) return
+      const target = event.target
+      if (target instanceof HTMLElement && (
+        target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+      )) return
       const key = event.key.toLowerCase()
       const isUndo = key === 'z' && !event.shiftKey
       const isRedo = key === 'y' || (key === 'z' && event.shiftKey)
@@ -141,20 +122,11 @@ function App() {
     return () => window.removeEventListener('keydown', handleHistoryShortcut)
   }, [])
 
-  const clearHand = () => {
-    updateHand((current) => ({
-      ...current,
-      counts: current.counts.map(() => 0),
-      selectedPreset: CUSTOM_PRESET_ID,
-    }))
-  }
-
-  const handlePresetChange = (id: string) => {
-    if (id === CUSTOM_PRESET_ID) return
+  const handlePresetSelect = (id: string) => {
     updateHand((current) => {
       const preset = presetsForOrder(current.order).find((item) => item.id === id)
       return preset
-        ? { ...current, counts: [...preset.counts], selectedPreset: preset.id }
+        ? { ...current, counts: [...preset.counts] }
         : current
     })
   }
@@ -165,7 +137,6 @@ function App() {
     updateHand(() => ({
       order: nextOrder,
       counts: [...preset.counts],
-      selectedPreset: preset.id,
     }))
   }
 
@@ -173,7 +144,13 @@ function App() {
     updateHand((current) => ({
       ...current,
       counts: setTileCount(current.counts, rank, count),
-      selectedPreset: CUSTOM_PRESET_ID,
+    }))
+  }
+
+  const handleCountsApply = (nextCounts: readonly number[]) => {
+    updateHand((current) => ({
+      ...current,
+      counts: [...nextCounts],
     }))
   }
 
@@ -230,51 +207,16 @@ function App() {
               </div>
             </section>
 
-            <section className="preset-panel" aria-label="Hand presets">
-              <div className="preset-controls">
-                <select
-                  value={selectedPreset}
-                  onChange={(event) => handlePresetChange(event.target.value)}
-                  aria-label="Choose a hand preset"
-                >
-                  <option value={CUSTOM_PRESET_ID} disabled>Custom hand</option>
-                  <optgroup label="Live full-sided">
-                    {livePresets.map((preset) => (
-                      <option key={preset.id} value={preset.id}>{preset.name}</option>
-                    ))}
-                  </optgroup>
-                  {deadPresets.length > 0 && (
-                    <optgroup label="Full-sided, dead wait">
-                      {deadPresets.map((preset) => (
-                        <option key={preset.id} value={preset.id}>{preset.name}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
-                <button type="button" className="clear-button" onClick={clearHand}>Clear</button>
-              </div>
-              <div className="history-controls">
-                <button
-                  type="button"
-                  onClick={undo}
-                  disabled={history.past.length === 0}
-                  title="Undo (Ctrl/⌘+Z)"
-                  aria-keyshortcuts="Control+Z Meta+Z"
-                >
-                  Undo
-                </button>
-                <button
-                  type="button"
-                  onClick={redo}
-                  disabled={history.future.length === 0}
-                  title="Redo (Ctrl+Y / Ctrl/⌘+Shift+Z)"
-                  aria-keyshortcuts="Control+Y Control+Shift+Z Meta+Shift+Z"
-                >
-                  Redo
-                </button>
-                <GitHubLink />
-              </div>
-            </section>
+            <HandToolbar
+              presets={orderPresets}
+              counts={counts}
+              canUndo={history.past.length > 0}
+              canRedo={history.future.length > 0}
+              onPresetSelect={handlePresetSelect}
+              onCountsApply={handleCountsApply}
+              onUndo={undo}
+              onRedo={redo}
+            />
 
             <InfoTabs
               plugins={INFO_PLUGINS}

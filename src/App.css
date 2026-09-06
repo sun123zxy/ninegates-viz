@@ -375,14 +375,14 @@
 }
 
 .order-panel,
-.preset-panel,
+.hand-tools-panel,
 .info-panel {
   border-top: 1px solid rgba(77, 59, 36, 0.16);
   padding-top: 1rem;
 }
 
 .order-panel,
-.preset-panel {
+.hand-tools-panel {
   flex: 0 0 auto;
 }
 
@@ -410,78 +410,94 @@
   font: 0.68rem var(--mono);
 }
 
-.preset-controls {
+.hand-toolbar {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.55rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
 }
 
-.preset-controls select,
-.preset-controls button {
+.toolbar-icon-button {
+  width: 100%;
   min-width: 0;
-  min-height: 2.25rem;
+  height: 2.2rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(77, 59, 36, 0.25);
   border-radius: 0.45rem;
-  font: 0.78rem var(--sans);
-}
-
-.preset-controls select {
-  grid-column: 1;
-  padding: 0 0.55rem;
-  border: 1px solid rgba(77, 59, 36, 0.25);
-  color: #463828;
-  background: #fffdf8;
-}
-
-.preset-controls button {
-  padding: 0 0.8rem;
-  cursor: pointer;
-}
-
-.clear-button {
-  border: 1px solid rgba(77, 59, 36, 0.25);
   color: #5f4f3b;
   background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
 }
 
-.preset-controls button:hover,
-.preset-controls button:focus-visible {
-  filter: brightness(1.07);
+.toolbar-icon-button:hover:not(:disabled),
+.toolbar-icon-button:focus-visible:not(:disabled) {
+  color: #9a4126;
+  background: #fff3df;
+  border-color: rgba(154, 65, 38, 0.42);
+}
+
+.toolbar-icon-button:focus-visible {
+  outline: 2px solid #1f5a75;
   outline-offset: 2px;
 }
 
-.history-controls {
-  margin-top: 0.55rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
-  gap: 0.55rem;
-}
-
-.history-controls .github-link {
-  width: 2rem;
-  height: 2rem;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-.history-controls button {
-  min-height: 2rem;
-  border: 1px solid rgba(77, 59, 36, 0.25);
-  border-radius: 0.45rem;
-  color: #5f4f3b;
-  background: transparent;
-  cursor: pointer;
-  font: 0.74rem var(--sans);
-}
-
-.history-controls button:hover:not(:disabled),
-.history-controls button:focus-visible:not(:disabled) {
-  background: #fff3df;
-}
-
-.history-controls button:disabled {
+.toolbar-icon-button:disabled {
   cursor: not-allowed;
   color: #b8ad9e;
   border-color: rgba(77, 59, 36, 0.12);
+}
+
+.toolbar-glyph {
+  font: 400 1.45rem/1 var(--sans);
+}
+
+.toolbar-input-glyph {
+  font: 700 0.82rem/1 var(--mono);
+}
+
+.preset-group h3 {
+  margin: 0;
+  color: #8b7d6a;
+  font: 400 0.7rem/1.4 var(--sans);
+}
+
+.preset-group {
+  padding-top: 0.65rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.preset-group h3 {
+  padding: 0 0.25rem 0.15rem;
+}
+
+.preset-option {
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.35rem 0.45rem;
+  display: block;
+  border: 0;
+  border-radius: 0.35rem;
+  color: #5f4f3b;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: 0.75rem/1.55 var(--mono);
+}
+
+.preset-option:hover,
+.preset-option:focus-visible {
+  color: #9a4126;
+  background: #fff3df;
+}
+
+.preset-option:focus-visible {
+  outline: 2px solid #1f5a75;
+  outline-offset: -2px;
 }
 
 .info-list {
@@ -733,27 +749,154 @@
 }
 
 .github-link {
-  width: 1.7rem;
-  height: 1.7rem;
-  margin-top: 0.35rem;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(77, 59, 36, 0.2);
-  border-radius: 0.45rem;
-  color: #5e4834;
-  transition: color 140ms ease, background 140ms ease;
-}
-
-.github-link:hover,
-.github-link:focus-visible {
-  color: #9a4126;
-  background: #fff3df;
+  margin: 0;
 }
 
 .github-link svg {
   width: 1rem;
   height: 1rem;
   fill: currentColor;
+}
+
+.preset-dialog,
+.hand-input-dialog {
+  max-width: none;
+  padding: 0;
+  border: 1px solid rgba(77, 59, 36, 0.25);
+  border-radius: 0.5rem;
+  color: #302a23;
+  background: #fffdf8;
+  box-shadow: 0 1.2rem 3.5rem rgba(48, 36, 22, 0.26);
+}
+
+.preset-dialog {
+  width: min(28rem, calc(100vw - 2rem));
+}
+
+.hand-input-dialog {
+  width: min(40rem, calc(100vw - 2rem));
+}
+
+.preset-dialog::backdrop,
+.hand-input-dialog::backdrop {
+  background: rgba(48, 42, 35, 0.34);
+}
+
+.modal-dialog-content {
+  padding: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.modal-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.modal-dialog-header h2 {
+  margin: 0;
+  color: #42382d;
+  font: 700 0.7rem var(--sans);
+}
+
+.preset-dialog-list {
+  max-height: min(30rem, 65dvh);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+  scrollbar-color: rgba(122, 88, 46, 0.45) transparent;
+  scrollbar-width: thin;
+}
+
+.preset-dialog-list .preset-group:first-child {
+  padding-top: 0;
+}
+
+.dialog-close {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0.4rem;
+  color: #6b5a46;
+  background: transparent;
+  cursor: pointer;
+  font: 400 1.45rem/1 var(--sans);
+}
+
+.dialog-close:hover,
+.dialog-close:focus-visible {
+  color: #9a4126;
+  background: #fff3df;
+}
+
+.hand-input-form {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.hand-input-form + .hand-input-form {
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(77, 59, 36, 0.14);
+}
+
+.hand-input-form label {
+  color: #8b7d6a;
+  font: 400 0.7rem/1.4 var(--sans);
+}
+
+.hand-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.hand-input-row input {
+  width: 100%;
+  min-width: 0;
+  height: 2.35rem;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(77, 59, 36, 0.28);
+  border-radius: 0.4rem;
+  color: #42382d;
+  background: #fff;
+  font: 0.75rem/1.55 var(--mono);
+}
+
+.hand-input-row input[aria-invalid='true'] {
+  border-color: #b52d28;
+  outline-color: #b52d28;
+}
+
+.hand-input-row button {
+  min-width: 4.5rem;
+  height: 2.35rem;
+  padding: 0 0.8rem;
+  border: 1px solid #895032;
+  border-radius: 0.4rem;
+  color: #fffdf8;
+  background: #895032;
+  cursor: pointer;
+  font: 700 0.74rem var(--sans);
+}
+
+.hand-input-row button:hover,
+.hand-input-row button:focus-visible {
+  background: #713d25;
+}
+
+.hand-input-error {
+  min-height: 1rem;
+  margin: 0;
+  color: #b52d28;
+  font: 0.68rem/1.4 var(--sans);
+}
+
+.hand-input-error-empty {
+  visibility: hidden;
 }
 
 @media (max-width: 760px) {
@@ -770,5 +913,14 @@
   .stacked-scroll {
     padding-left: 0.7rem;
     padding-right: 0.7rem;
+  }
+
+  .preset-dialog,
+  .hand-input-dialog {
+    width: calc(100vw - 1rem);
+  }
+
+  .hand-input-row {
+    grid-template-columns: minmax(0, 1fr) 4.2rem;
   }
 }

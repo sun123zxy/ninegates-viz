@@ -13,6 +13,8 @@ const server = await createServer({
 try {
   const { MAX_EDITABLE_TILE_COUNT, setTileCount } =
     await server.ssrLoadModule('/src/core/hand.ts')
+  const { parseMultiplicityVector, parseMultiset } =
+    await server.ssrLoadModule('/src/core/parseHand.ts')
   const { analyzeHand, meldDecomposition, winningDecomposition } =
     await server.ssrLoadModule('/src/plugins/waitingTiles.ts')
   const { calculateDrawPairGraph } =
@@ -23,6 +25,10 @@ try {
     await server.ssrLoadModule('/src/components/DrawPairGraphPanel.tsx')
   const { StackedHandView } =
     await server.ssrLoadModule('/src/components/StackedHandView.tsx')
+  const { HandToolbar } =
+    await server.ssrLoadModule('/src/components/HandToolbar.tsx')
+  const { PresetDialog } =
+    await server.ssrLoadModule('/src/components/PresetDialog.tsx')
   const { INFO_PLUGINS } = await server.ssrLoadModule('/src/plugins/info.tsx')
   const { HISTORY_LIMIT, commitHistory, createHistory, redoHistory, undoHistory } =
     await server.ssrLoadModule('/src/core/history.ts')
@@ -70,6 +76,28 @@ try {
   assert.equal(MAX_EDITABLE_TILE_COUNT, 10)
   assert.deepEqual(setTileCount([0], 1, 10), [10])
   assert.throws(() => setTileCount([0], 1, 11), /between 0 and 10/)
+
+  assert.deepEqual(parseMultiplicityVector('【（3， 1 3）】', 3), {
+    ok: true,
+    counts: [3, 1, 3],
+  })
+  assert.deepEqual(parseMultiplicityVector('[0, 10, 2]', 3), {
+    ok: true,
+    counts: [0, 10, 2],
+  })
+  assert.match(parseMultiplicityVector('{}', 3).error, /Expected 3 entries/)
+  assert.match(parseMultiplicityVector('[0, 11, 2]', 3).error, /from 0 to 10/)
+  assert.deepEqual(parseMultiset('｛1， 1 3｝', 3), {
+    ok: true,
+    counts: [2, 0, 1],
+  })
+  assert.deepEqual(parseMultiset('{}', 3), {
+    ok: true,
+    counts: [0, 0, 0],
+  })
+  assert.match(parseMultiset('{1, 4}', 3).error, /from 1 to 3/)
+  assert.match(parseMultiset(Array.from({ length: 11 }, () => 1).join(' '), 3).error,
+    /at most 10 times/)
 
   const threeRankGraph = calculateDrawPairGraph([3, 1, 3])
   assert.deepEqual(threeRankGraph, {
@@ -212,6 +240,45 @@ try {
     edges: [],
     waitingTiles: [],
   })
+
+  const toolbarMarkup = renderToStaticMarkup(createElement(HandToolbar, {
+    presets: [{
+      id: 'n1-standard',
+      name: 'Standard',
+      n: 1,
+      counts: [3, 1, 3],
+      waitKind: 'live',
+      isStandard: true,
+    }],
+    counts: [3, 1, 3],
+    canUndo: true,
+    canRedo: false,
+    onPresetSelect: () => {},
+    onCountsApply: () => {},
+    onUndo: () => {},
+    onRedo: () => {},
+  }))
+  assert.match(toolbarMarkup, /aria-label="Choose a hand preset"/)
+  assert.match(toolbarMarkup, /aria-label="Input a hand"/)
+  assert.match(toolbarMarkup, /aria-label="Undo"/)
+  assert.match(toolbarMarkup, /aria-label="Redo"/)
+  assert.doesNotMatch(toolbarMarkup, />Clear</)
+
+  const presetDialogMarkup = renderToStaticMarkup(createElement(PresetDialog, {
+    presets: [{
+      id: 'n1-standard',
+      name: 'Standard',
+      n: 1,
+      counts: [3, 1, 3],
+      waitKind: 'live',
+      isStandard: true,
+    }],
+    onSelect: () => {},
+    onClose: () => {},
+  }))
+  assert.match(presetDialogMarkup, /<dialog class="preset-dialog"/)
+  assert.match(presetDialogMarkup, />Standard</)
+  assert.doesNotMatch(presetDialogMarkup, /Current|aria-pressed|preset-option-active/)
 
   const handPlugin = INFO_PLUGINS.find((plugin) => plugin.id === 'hand-analysis')
   assert.ok(handPlugin)
