@@ -11,6 +11,8 @@ const server = await createServer({
 })
 
 try {
+  const { MAX_EDITABLE_TILE_COUNT, setTileCount } =
+    await server.ssrLoadModule('/src/core/hand.ts')
   const { analyzeHand, meldDecomposition, winningDecomposition } =
     await server.ssrLoadModule('/src/plugins/waitingTiles.ts')
   const { calculateDrawPairGraph } =
@@ -65,6 +67,9 @@ try {
   })
   assert.deepEqual(analyzeHand([1, 0, 2]), { kind: 'not-meldable' })
   assert.deepEqual(analyzeHand([7, 1, 0]), { kind: 'not-winning' })
+  assert.equal(MAX_EDITABLE_TILE_COUNT, 10)
+  assert.deepEqual(setTileCount([0], 1, 10), [10])
+  assert.throws(() => setTileCount([0], 1, 11), /between 0 and 10/)
 
   const threeRankGraph = calculateDrawPairGraph([3, 1, 3])
   assert.deepEqual(threeRankGraph, {
@@ -100,28 +105,29 @@ try {
     { kind: 'trip', ranks: [1, 1, 1] },
     { kind: 'pair', ranks: [3, 3] },
   ])
-  const seventhLevelGraph = calculateDrawPairGraph([1, 3, 6])
-  const seventhLevelEdge = seventhLevelGraph.edges
-    .find(({ from, to }) => from === 3 && to === 2)
-  assert.ok(seventhLevelEdge)
+  const eleventhLevelGraph = calculateDrawPairGraph([0, 0, 10])
+  const eleventhLevelEdge = eleventhLevelGraph.edges
+    .find(({ from, to }) => from === 3 && to === 3)
+  assert.ok(eleventhLevelEdge)
   assert.equal(
-    decompositionGroups(seventhLevelEdge.decomposition)
+    decompositionGroups(eleventhLevelEdge.decomposition)
       .flatMap(({ ranks }) => ranks)
       .filter((rank) => rank === 3)
       .length,
-    7,
+    11,
   )
-  const seventhLevelOverlay = drawPairOverlay(
-    seventhLevelGraph,
-    seventhLevelEdge,
+  const eleventhLevelOverlay = drawPairOverlay(
+    eleventhLevelGraph,
+    eleventhLevelEdge,
   )
   const stackedMarkup = renderToStaticMarkup(createElement(StackedHandView, {
-    counts: [1, 3, 6],
+    counts: [0, 0, 10],
     onCountChange: () => {},
     onEditStart: () => {},
     onEditEnd: () => {},
-    overlay: seventhLevelOverlay,
+    overlay: eleventhLevelOverlay,
   }))
+  assert.match(stackedMarkup, /aria-label="10-level tile grid"/)
   assert.match(
     stackedMarkup,
     /stack-cell-virtual-target stack-cell-target stack-cell-target-draw/,

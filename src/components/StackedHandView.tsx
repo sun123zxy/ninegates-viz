@@ -72,6 +72,7 @@ export function StackedHandView({
   overlay,
 }: StackedHandViewProps) {
   const gridRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<DragState | null>(null)
   const sliderRefs = useRef<Array<HTMLDivElement | null>>([])
   const overlayGroups = overlay?.groups
@@ -85,6 +86,11 @@ export function StackedHandView({
     [overlayTargets],
   )
   const [linePaths, setLinePaths] = useState<readonly LinePath[]>([])
+
+  useLayoutEffect(() => {
+    const scroller = scrollRef.current
+    if (scroller) scroller.scrollTop = scroller.scrollHeight
+  }, [])
 
   useLayoutEffect(() => {
     const grid = gridRef.current
@@ -158,7 +164,7 @@ export function StackedHandView({
 
   return (
     <section className="view-card stacked-view" aria-label="Editable stacked hand view">
-      <div className="stacked-scroll">
+      <div className="stacked-scroll" ref={scrollRef}>
         <div
           className="stacked-grid"
           ref={gridRef}
@@ -167,7 +173,7 @@ export function StackedHandView({
             '--stack-level-count': MAX_EDITABLE_TILE_COUNT,
             '--over-limit-level-count': MAX_EDITABLE_TILE_COUNT - STANDARD_TILE_LIMIT,
           } as CSSProperties}
-          aria-label="Six-level tile grid"
+          aria-label={`${MAX_EDITABLE_TILE_COUNT}-level tile grid`}
         >
           {counts.flatMap((count, index) =>
             Array.from({ length: MAX_EDITABLE_TILE_COUNT }, (_, levelIndex) => {

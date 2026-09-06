@@ -1,6 +1,6 @@
 export type HandCounts = readonly number[]
 
-export const MAX_EDITABLE_TILE_COUNT = 6
+export const MAX_EDITABLE_TILE_COUNT = 10
 export const STANDARD_TILE_LIMIT = 4
 
 function assertRank(counts: HandCounts, rank: number) {
