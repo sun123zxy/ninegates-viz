@@ -145,6 +145,50 @@ try {
   assert.match(graphMarkup, /class="draw-pair-arrow"/)
   assert.match(graphMarkup, /M [^"]+ L [^"]+"/)
   assert.match(graphMarkup, /draw-pair-node-waiting/)
+  const bottomReciprocalGraph = calculateDrawPairGraph([2, 0, 0, 2, 0, 0])
+  assert.deepEqual(
+    bottomReciprocalGraph.edges.map(({ from, to }) => [from, to]),
+    [[1, 4], [4, 1]],
+  )
+  const bottomReciprocalMarkup = renderToStaticMarkup(createElement(DrawPairGraphPanel, {
+    graph: bottomReciprocalGraph,
+    onPreviewOverlayChange: () => {},
+  }))
+  const bottomVisiblePaths = [...bottomReciprocalMarkup.matchAll(
+    /class="draw-pair-edge" d="([^"]+)"/g,
+  )].map((match) => match[1])
+  assert.equal(bottomVisiblePaths.length, 2)
+  assert.ok(bottomVisiblePaths.every((path) => path.includes(' L ')))
+
+  const longBottomGraph = calculateDrawPairGraph([2, 0, 0, 0, 0, 0, 2, 0, 0])
+  assert.deepEqual(
+    longBottomGraph.edges.map(({ from, to }) => [from, to]),
+    [[1, 7], [7, 1]],
+  )
+  const longBottomMarkup = renderToStaticMarkup(createElement(DrawPairGraphPanel, {
+    graph: longBottomGraph,
+    onPreviewOverlayChange: () => {},
+  }))
+  const longBottomPaths = [...longBottomMarkup.matchAll(
+    /class="draw-pair-edge" d="([^"]+)"/g,
+  )].map((match) => match[1])
+  assert.equal(longBottomPaths.length, 2)
+  assert.ok(longBottomPaths.every((path) => path.includes(' Q ')))
+  const [forwardCurve, reverseCurve] = longBottomPaths.map((path) => (
+    [...path.matchAll(/-?\d+(?:\.\d+)?/g)].map((match) => Number(match[0]))
+  ))
+  assert.deepEqual(
+    [forwardCurve[0], forwardCurve[2], forwardCurve[4]],
+    [reverseCurve[4], reverseCurve[2], reverseCurve[0]],
+  )
+  assert.deepEqual(
+    [
+      forwardCurve[1] - reverseCurve[5],
+      forwardCurve[3] - reverseCurve[3],
+      forwardCurve[5] - reverseCurve[1],
+    ],
+    [7, 7, 7],
+  )
   assert.deepEqual(drawPairOverlay(threeRankGraph, threeRankGraph.edges[0]), {
     targets: [
       { rank: 1, kind: 'draw' },

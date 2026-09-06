@@ -85,6 +85,17 @@ function straightGeometry(start: Point, end: Point): EdgeGeometry {
   }
 }
 
+function quadraticGeometry(start: Point, control: Point, end: Point): EdgeGeometry {
+  return {
+    path: `M ${start.x} ${start.y} Q ${control.x} ${control.y}, ${end.x} ${end.y}`,
+    arrowCenter: {
+      x: (start.x + 2 * control.x + end.x) / 4,
+      y: (start.y + 2 * control.y + end.y) / 4,
+    },
+    arrowAngle: angleBetween(start, end),
+  }
+}
+
 function adjacencyRows(graph: DrawPairGraph) {
   const rankCount = graph.groups.reduce((count, group) => count + group.ranks.length, 0)
   const targets = Array.from({ length: rankCount }, () => [] as number[])
@@ -95,7 +106,7 @@ function adjacencyRows(graph: DrawPairGraph) {
 function edgeGeometry(
   edge: DrawPairEdge,
   positions: Map<number, Point>,
-  bottomRanks: ReadonlySet<number>,
+  bottomRankIndices: ReadonlyMap<number, number>,
   hasReverse: boolean,
 ): EdgeGeometry | undefined {
   const from = positions.get(edge.from)
@@ -124,25 +135,33 @@ function edgeGeometry(
     }
   }
 
+  const fromBottomIndex = bottomRankIndices.get(edge.from)
+  const toBottomIndex = bottomRankIndices.get(edge.to)
+  const isBottomEdge = fromBottomIndex !== undefined && toBottomIndex !== undefined
+
+  if (isBottomEdge && Math.abs(fromBottomIndex - toBottomIndex) === 1) {
+    const [start, end] = clippedEndpoints(from, to, hasReverse ? 3.5 : 0)
+    return straightGeometry(start, end)
+  }
+
+  if (isBottomEdge) {
+    const [start, end] = clippedEndpoints(from, to, hasReverse ? 3.5 : 0)
+    const laneOffset = hasReverse ? start.y - BOTTOM_Y : 0
+    const directionOffset = !hasReverse && edge.from > edge.to ? 13 : 0
+    const depth = 24 + Math.abs(end.x - start.x) * 0.2 + directionOffset
+    const control = {
+      x: (start.x + end.x) / 2,
+      y: BOTTOM_Y + depth + laneOffset,
+    }
+    return quadraticGeometry(start, control, end)
+  }
+
   if (hasReverse) {
     const [start, end] = clippedEndpoints(from, to, 3.5)
     return straightGeometry(start, end)
   }
 
   const [start, end] = clippedEndpoints(from, to)
-  if (bottomRanks.has(edge.from) && bottomRanks.has(edge.to)) {
-    const depth = 24 + Math.abs(end.x - start.x) * 0.2 + (edge.from > edge.to ? 13 : 0)
-    const control = { x: (start.x + end.x) / 2, y: BOTTOM_Y + depth }
-    return {
-      path: `M ${start.x} ${start.y} Q ${control.x} ${control.y}, ${end.x} ${end.y}`,
-      arrowCenter: {
-        x: (start.x + 2 * control.x + end.x) / 4,
-        y: (start.y + 2 * control.y + end.y) / 4,
-      },
-      arrowAngle: angleBetween(start, end),
-    }
-  }
-
   return straightGeometry(start, end)
 }
 
@@ -183,8 +202,8 @@ export function DrawPairGraphPanel({
     [graph.edges],
   )
   const bottomGroup = graph.groups.find((group) => group.role === 'bottom')
-  const bottomRanks = useMemo(
-    () => new Set(bottomGroup?.ranks ?? []),
+  const bottomRankIndices = useMemo(
+    () => new Map(bottomGroup?.ranks.map((rank, index) => [rank, index]) ?? []),
     [bottomGroup],
   )
   const waitingTiles = useMemo(
@@ -241,7 +260,7 @@ export function DrawPairGraphPanel({
           const key = edgeKey(edge)
           const isActive = effectiveKey === key
           const hasReverse = edge.from !== edge.to && edgeByKey.has(`${edge.to}-${edge.from}`)
-          const geometry = edgeGeometry(edge, positions, bottomRanks, hasReverse)
+          const geometry = edgeGeometry(edge, positions, bottomRankIndices, hasReverse)
           if (!geometry) return null
           const stateClass = isActive ? ' draw-pair-edge-active' : ''
           return (
