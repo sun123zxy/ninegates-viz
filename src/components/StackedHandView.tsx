@@ -4,7 +4,7 @@ import {
   STANDARD_TILE_LIMIT,
   type HandCounts,
 } from '../core/hand'
-import type { HandDecomposition } from '../plugins/waitingTiles'
+import type { HandOverlay, RankGroup } from '../plugins/types'
 import { MahjongTile } from './MahjongTile'
 
 type StackedHandViewProps = {
@@ -12,8 +12,7 @@ type StackedHandViewProps = {
   onCountChange: (rank: number, count: number) => void
   onEditStart: () => void
   onEditEnd: () => void
-  waitingTiles?: readonly number[]
-  decomposition?: HandDecomposition
+  overlay?: HandOverlay
 }
 
 type DragState = {
@@ -22,29 +21,24 @@ type DragState = {
 }
 
 type DecompositionLine = {
-  kind: 'seq' | 'trip' | 'pair'
+  kind: string
   tiles: readonly { rank: number; level: number }[]
 }
 
 type LinePath = {
-  kind: DecompositionLine['kind']
+  kind: string
   points: string
   endpoints: readonly { x: number; y: number }[]
 }
 
-function buildDecompositionLines(decomposition: HandDecomposition): DecompositionLine[] {
-  const groups: Array<{ kind: DecompositionLine['kind']; ranks: number[] }> = [
-    ...decomposition.sequences.map((start) => ({ kind: 'seq' as const, ranks: [start, start + 1, start + 2] })),
-    ...decomposition.triplets.map((rank) => ({ kind: 'trip' as const, ranks: [rank, rank, rank] })),
-  ]
-  if (decomposition.pair !== undefined) {
-    groups.push({ kind: 'pair', ranks: [decomposition.pair, decomposition.pair] })
-  }
-
+function buildDecompositionLines(groups: readonly RankGroup[], rankCount: number): DecompositionLine[] {
   const usedLevels: number[] = []
   return groups.map(({ kind, ranks }) => ({
     kind,
     tiles: ranks.map((rank) => {
+      if (!Number.isInteger(rank) || rank < 1 || rank > rankCount) {
+        return { rank, level: 0 }
+      }
       const level = (usedLevels[rank - 1] ?? 0) + 1
       usedLevels[rank - 1] = level
       return { rank, level }
@@ -57,15 +51,14 @@ export function StackedHandView({
   onCountChange,
   onEditStart,
   onEditEnd,
-  waitingTiles,
-  decomposition,
+  overlay,
 }: StackedHandViewProps) {
   const gridRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<DragState | null>(null)
   const sliderRefs = useRef<Array<HTMLDivElement | null>>([])
   const decompositionLines = useMemo(
-    () => decomposition ? buildDecompositionLines(decomposition) : [],
-    [decomposition],
+    () => overlay?.groups ? buildDecompositionLines(overlay.groups, counts.length) : [],
+    [counts.length, overlay],
   )
   const [linePaths, setLinePaths] = useState<readonly LinePath[]>([])
 
@@ -144,7 +137,7 @@ export function StackedHandView({
               const level = MAX_EDITABLE_TILE_COUNT - levelIndex
               const isFilled = level <= count
               const isWaitingTarget =
-                waitingTiles?.includes(index + 1) &&
+                overlay?.highlights?.includes(index + 1) &&
                 count < MAX_EDITABLE_TILE_COUNT &&
                 level === count + 1
               return (

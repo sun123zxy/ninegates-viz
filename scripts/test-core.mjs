@@ -11,6 +11,7 @@ const server = await createServer({
 try {
   const { analyzeHand, meldDecomposition, winningDecomposition } =
     await server.ssrLoadModule('/src/plugins/waitingTiles.ts')
+  const { INFO_PLUGINS } = await server.ssrLoadModule('/src/plugins/info.tsx')
   const { HISTORY_LIMIT, commitHistory, createHistory, redoHistory, undoHistory } =
     await server.ssrLoadModule('/src/core/history.ts')
 
@@ -54,6 +55,27 @@ try {
   })
   assert.deepEqual(analyzeHand([1, 0, 2]), { kind: 'not-meldable' })
   assert.deepEqual(analyzeHand([7, 1, 0]), { kind: 'not-winning' })
+
+  const handPlugin = INFO_PLUGINS.find((plugin) => plugin.id === 'hand-analysis')
+  assert.ok(handPlugin)
+  const waitingResult = handPlugin.calculate([3, 1, 1, 1, 1, 1, 1, 1, 3])
+  assert.deepEqual(waitingResult.overlay, {
+    highlights: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    groups: [],
+  })
+  assert.equal(JSON.stringify(waitingResult).includes('level'), false)
+  assert.equal(JSON.stringify(waitingResult).includes('offset'), false)
+
+  const winningResult = handPlugin.calculate([3, 1, 1, 1, 2, 1, 1, 1, 3])
+  assert.deepEqual(winningResult.overlay, {
+    groups: [
+      { kind: 'seq', ranks: [2, 3, 4] },
+      { kind: 'seq', ranks: [6, 7, 8] },
+      { kind: 'trip', ranks: [1, 1, 1] },
+      { kind: 'trip', ranks: [9, 9, 9] },
+      { kind: 'pair', ranks: [5, 5] },
+    ],
+  })
 
   const equal = (left, right) => left === right
   let history = createHistory(1)

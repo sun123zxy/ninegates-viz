@@ -474,6 +474,48 @@
   scrollbar-width: thin;
 }
 
+.info-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1px solid rgba(77, 59, 36, 0.16);
+  background: rgba(255, 252, 245, 0.96);
+}
+
+.info-tab {
+  min-height: 2rem;
+  margin-bottom: -1px;
+  padding: 0.2rem 0.35rem 0.45rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #8b7d6a;
+  background: transparent;
+  cursor: pointer;
+  font: 700 0.7rem var(--sans);
+}
+
+.info-tab:hover,
+.info-tab:focus-visible {
+  color: #9a4126;
+}
+
+.info-tab:focus-visible {
+  outline: 1px solid #1f5a75;
+  outline-offset: -1px;
+}
+
+.info-tab-active {
+  border-bottom-color: #a24d2b;
+  color: #463828;
+}
+
+.info-tabpanel {
+  min-height: 0;
+}
+
 .info-list div {
   display: grid;
   gap: 0.18rem;

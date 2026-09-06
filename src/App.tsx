@@ -12,10 +12,10 @@ import {
   SUPPORTED_ORDERS,
   type Order,
 } from './core/presets'
-import { HandInfo } from './components/HandInfo'
+import { InfoTabs } from './components/InfoTabs'
 import { LinearHandView } from './components/LinearHandView'
 import { StackedHandView } from './components/StackedHandView'
-import { handAnalysisPlugin } from './plugins/waitingTiles'
+import { INFO_PLUGINS } from './plugins/info'
 import './App.css'
 
 const CUSTOM_PRESET_ID = 'custom'
@@ -62,6 +62,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(
     () => !window.matchMedia('(max-width: 760px)').matches,
   )
+  const [activeInfoPluginId, setActiveInfoPluginId] = useState(INFO_PLUGINS[0]?.id ?? '')
   const transactionStartRef = useRef<HandSnapshot | null>(null)
 
   const { order, counts, selectedPreset } = history.present
@@ -69,10 +70,9 @@ function App() {
   const orderPresets = presetsForOrder(order)
   const livePresets = orderPresets.filter((preset) => preset.waitKind === 'live')
   const deadPresets = orderPresets.filter((preset) => preset.waitKind === 'dead')
-  const analysis = handAnalysisPlugin.calculate(counts)
-  const decomposition = analysis.kind === 'meldable' || analysis.kind === 'winning'
-    ? analysis.decomposition
-    : undefined
+  const activeInfoPlugin = INFO_PLUGINS.find((plugin) => plugin.id === activeInfoPluginId)
+    ?? INFO_PLUGINS[0]
+  const activeInfoResult = activeInfoPlugin?.calculate(counts)
 
   const updateHand = (update: (current: HandSnapshot) => HandSnapshot) => {
     setHistory((current) => {
@@ -165,8 +165,7 @@ function App() {
           onCountChange={handleCountChange}
           onEditStart={beginHistoryTransaction}
           onEditEnd={finishHistoryTransaction}
-          waitingTiles={analysis.kind === 'waiting' ? analysis.waitingTiles : undefined}
-          decomposition={decomposition}
+          overlay={activeInfoResult?.overlay}
         />
       </section>
 
@@ -255,7 +254,13 @@ function App() {
               </div>
             </section>
 
-            <HandInfo counts={counts} analysis={analysis} />
+            <InfoTabs
+              plugins={INFO_PLUGINS}
+              activePluginId={activeInfoPlugin?.id ?? ''}
+              counts={counts}
+              result={activeInfoResult}
+              onPluginChange={setActiveInfoPluginId}
+            />
 
             <div className="sidebar-footer">
               <div className="sidebar-footer-copy">

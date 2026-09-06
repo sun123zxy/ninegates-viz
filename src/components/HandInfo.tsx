@@ -22,7 +22,7 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
     : undefined
 
   return (
-    <section className="info-panel" aria-label="Hand information">
+    <div className="info-plugin-content">
       <dl className="info-list">
         <div>
           <dt>Tile count</dt>
@@ -95,6 +95,6 @@ export function HandInfo({ counts, analysis }: HandInfoProps) {
           </div>
         )}
       </dl>
-    </section>
+    </div>
   )
 }
