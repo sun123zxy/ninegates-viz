@@ -4,7 +4,12 @@ import {
   STANDARD_TILE_LIMIT,
   type HandCounts,
 } from '../core/hand'
-import type { HandOverlay, RankGroup } from '../plugins/types'
+import type {
+  HandOverlay,
+  HandTarget,
+  RankGroup,
+  RankGroupKind,
+} from '../plugins/types'
 import { MahjongTile } from './MahjongTile'
 
 type StackedHandViewProps = {
@@ -21,14 +26,27 @@ type DragState = {
 }
 
 type DecompositionLine = {
-  kind: string
+  kind: RankGroupKind
   tiles: readonly { rank: number; level: number }[]
 }
 
 type LinePath = {
-  kind: string
+  kind: RankGroupKind
   points: string
   endpoints: readonly { x: number; y: number }[]
+}
+
+function targetClassName(kind: HandTarget['kind']): string {
+  return `stack-cell-target stack-cell-target-${kind}`
+}
+
+function indexTargets(targets: readonly HandTarget[]): Map<number, HandTarget> {
+  const targetsByRank = new Map<number, HandTarget>()
+  for (const target of targets) {
+    const current = targetsByRank.get(target.rank)
+    if (!current || target.kind === 'draw') targetsByRank.set(target.rank, target)
+  }
+  return targetsByRank
 }
 
 function buildDecompositionLines(groups: readonly RankGroup[], rankCount: number): DecompositionLine[] {
@@ -56,9 +74,15 @@ export function StackedHandView({
   const gridRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<DragState | null>(null)
   const sliderRefs = useRef<Array<HTMLDivElement | null>>([])
+  const overlayGroups = overlay?.groups
+  const overlayTargets = overlay?.targets
   const decompositionLines = useMemo(
-    () => overlay?.groups ? buildDecompositionLines(overlay.groups, counts.length) : [],
-    [counts.length, overlay],
+    () => overlayGroups ? buildDecompositionLines(overlayGroups, counts.length) : [],
+    [counts.length, overlayGroups],
+  )
+  const targetsByRank = useMemo(
+    () => indexTargets(overlayTargets ?? []),
+    [overlayTargets],
   )
   const [linePaths, setLinePaths] = useState<readonly LinePath[]>([])
 
@@ -75,7 +99,17 @@ export function StackedHandView({
           const cell = grid.querySelector<HTMLElement>(
             `[data-rank="${rank}"][data-level="${level}"]`,
           )
-          if (!cell) return null
+          if (!cell) {
+            const levelOne = grid.querySelector<HTMLElement>(
+              `[data-rank="${rank}"][data-level="1"]`,
+            )
+            if (!levelOne || level <= MAX_EDITABLE_TILE_COUNT) return null
+            return {
+              x: levelOne.offsetLeft + levelOne.offsetWidth / 2,
+              y: levelOne.offsetTop + levelOne.offsetHeight / 2 -
+                (level - 1) * levelOne.offsetHeight,
+            }
+          }
           return {
             x: cell.offsetLeft + cell.offsetWidth / 2,
             y: cell.offsetTop + cell.offsetHeight / 2,
@@ -107,7 +141,10 @@ export function StackedHandView({
     const rect = grid.getBoundingClientRect()
     const cell = grid.querySelector<HTMLElement>('.stack-cell')
     const rowHeight = cell?.offsetHeight ?? rect.height / MAX_EDITABLE_TILE_COUNT
-    const tileGridBottom = rect.top + rowHeight * MAX_EDITABLE_TILE_COUNT
+    const bottomCell = grid.querySelector<HTMLElement>('[data-level="1"]')
+    const tileGridBottom = rect.top + (bottomCell
+      ? bottomCell.offsetTop + bottomCell.offsetHeight
+      : rowHeight * (MAX_EDITABLE_TILE_COUNT + 1))
     const heightFromBottom = tileGridBottom - clientY
     return Math.min(
       MAX_EDITABLE_TILE_COUNT,
@@ -136,14 +173,15 @@ export function StackedHandView({
             Array.from({ length: MAX_EDITABLE_TILE_COUNT }, (_, levelIndex) => {
               const level = MAX_EDITABLE_TILE_COUNT - levelIndex
               const isFilled = level <= count
-              const isWaitingTarget =
-                overlay?.highlights?.includes(index + 1) &&
+              const target = targetsByRank.get(index + 1)
+              const isTarget =
+                target !== undefined &&
                 count < MAX_EDITABLE_TILE_COUNT &&
                 level === count + 1
               return (
                 <div
                   className={`stack-cell ${isFilled ? 'stack-cell-filled' : 'stack-cell-empty'}${
-                    isWaitingTarget ? ' stack-cell-waiting-target' : ''
+                    isTarget ? ` ${targetClassName(target.kind)}` : ''
                   }`}
                   key={`${index + 1}-${level}`}
                   style={{ gridColumn: index + 1, gridRow: levelIndex + 1 }}
@@ -156,6 +194,20 @@ export function StackedHandView({
               )
             }),
           )}
+          {[...targetsByRank.values()].map((target) => {
+            const count = counts[target.rank - 1]
+            if (count !== MAX_EDITABLE_TILE_COUNT) return null
+            return (
+              <div
+                className={`stack-cell stack-cell-empty stack-cell-virtual-target ${targetClassName(target.kind)}`}
+                key={`virtual-target-${target.rank}`}
+                style={{ '--rank-index': target.rank - 1 } as CSSProperties}
+                data-rank={target.rank}
+                data-level={MAX_EDITABLE_TILE_COUNT + 1}
+                aria-hidden="true"
+              />
+            )
+          })}
           <div className="standard-tile-limit" aria-hidden="true" />
           {linePaths.length > 0 && (
             <svg className="decomposition-overlay" aria-hidden="true">

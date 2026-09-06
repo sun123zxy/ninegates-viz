@@ -1,6 +1,6 @@
 import { useRef, type KeyboardEvent } from 'react'
 import type { HandCounts } from '../core/hand'
-import type { InfoPlugin, InfoPluginResult } from '../plugins/types'
+import type { HandOverlay, InfoPlugin, InfoPluginResult } from '../plugins/types'
 
 type InfoTabsProps = {
   plugins: readonly InfoPlugin[]
@@ -8,6 +8,7 @@ type InfoTabsProps = {
   counts: HandCounts
   result: InfoPluginResult | undefined
   onPluginChange: (pluginId: string) => void
+  onPreviewOverlayChange: (overlay: HandOverlay | undefined) => void
 }
 
 export function InfoTabs({
@@ -16,6 +17,7 @@ export function InfoTabs({
   counts,
   result,
   onPluginChange,
+  onPreviewOverlayChange,
 }: InfoTabsProps) {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const activeIndex = Math.max(0, plugins.findIndex((plugin) => plugin.id === activePluginId))
@@ -73,7 +75,7 @@ export function InfoTabs({
         aria-labelledby={`info-tab-${activePlugin.id}`}
         tabIndex={0}
       >
-        {result && activePlugin.render(result.data, counts)}
+        {result && activePlugin.render(result.data, counts, { onPreviewOverlayChange })}
       </div>
     </section>
   )

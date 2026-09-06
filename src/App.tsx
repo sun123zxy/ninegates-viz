@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { setTileCount } from './core/hand'
 import {
   commitHistory,
@@ -16,6 +16,7 @@ import { InfoTabs } from './components/InfoTabs'
 import { LinearHandView } from './components/LinearHandView'
 import { StackedHandView } from './components/StackedHandView'
 import { INFO_PLUGINS } from './plugins/info'
+import type { HandOverlay } from './plugins/types'
 import './App.css'
 
 const CUSTOM_PRESET_ID = 'custom'
@@ -27,6 +28,12 @@ type HandSnapshot = {
   order: Order
   counts: number[]
   selectedPreset: string
+}
+
+type PreviewOverlay = {
+  pluginId: string
+  counts: readonly number[]
+  overlay: HandOverlay
 }
 
 function sameHand(left: HandSnapshot, right: HandSnapshot): boolean {
@@ -63,6 +70,7 @@ function App() {
     () => !window.matchMedia('(max-width: 760px)').matches,
   )
   const [activeInfoPluginId, setActiveInfoPluginId] = useState(INFO_PLUGINS[0]?.id ?? '')
+  const [previewOverlay, setPreviewOverlay] = useState<PreviewOverlay | null>(null)
   const transactionStartRef = useRef<HandSnapshot | null>(null)
 
   const { order, counts, selectedPreset } = history.present
@@ -72,7 +80,20 @@ function App() {
   const deadPresets = orderPresets.filter((preset) => preset.waitKind === 'dead')
   const activeInfoPlugin = INFO_PLUGINS.find((plugin) => plugin.id === activeInfoPluginId)
     ?? INFO_PLUGINS[0]
-  const activeInfoResult = activeInfoPlugin?.calculate(counts)
+  const activeInfoResult = useMemo(
+    () => activeInfoPlugin?.calculate(counts),
+    [activeInfoPlugin, counts],
+  )
+  const handlePreviewOverlayChange = useCallback((overlay: HandOverlay | undefined) => {
+    setPreviewOverlay(overlay && activeInfoPlugin
+      ? { pluginId: activeInfoPlugin.id, counts, overlay }
+      : null)
+  }, [activeInfoPlugin, counts])
+  const matchingPreview = previewOverlay?.pluginId === activeInfoPlugin?.id &&
+    previewOverlay.counts === counts
+    ? previewOverlay.overlay
+    : undefined
+  const visibleOverlay = matchingPreview ?? activeInfoResult?.overlay
 
   const updateHand = (update: (current: HandSnapshot) => HandSnapshot) => {
     setHistory((current) => {
@@ -165,7 +186,7 @@ function App() {
           onCountChange={handleCountChange}
           onEditStart={beginHistoryTransaction}
           onEditEnd={finishHistoryTransaction}
-          overlay={activeInfoResult?.overlay}
+          overlay={visibleOverlay}
         />
       </section>
 
@@ -251,6 +272,7 @@ function App() {
                 >
                   Redo
                 </button>
+                <GitHubLink />
               </div>
             </section>
 
@@ -260,17 +282,8 @@ function App() {
               counts={counts}
               result={activeInfoResult}
               onPluginChange={setActiveInfoPluginId}
+              onPreviewOverlayChange={handlePreviewOverlayChange}
             />
-
-            <div className="sidebar-footer">
-              <div className="sidebar-footer-copy">
-                <span>Click or drag a stack to set its height</span>
-                <span>← → switch stacks</span>
-                <span>↑ ↓ / Home / End edit a focused stack</span>
-                <span>Ctrl+Z undo; Ctrl+Y or Ctrl+Shift+Z redo</span>
-              </div>
-              <GitHubLink />
-            </div>
           </div>
         )}
       </aside>

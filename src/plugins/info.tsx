@@ -1,29 +1,23 @@
 import { HandInfo } from '../components/HandInfo'
+import { DrawPairGraphPanel } from '../components/DrawPairGraphPanel'
+import { calculateDrawPairGraph, type DrawPairGraph } from './drawPairGraph'
+import { decompositionGroups, drawPairOverlay, waitingTargets } from './handOverlay'
 import type { HandAnalysis } from './waitingTiles'
 import { handAnalysisPlugin } from './waitingTiles'
-import type { HandOverlay, InfoPlugin, InfoPluginResult, RankGroup } from './types'
+import type { HandOverlay, InfoPlugin, InfoPluginResult } from './types'
 
 function handAnalysisOverlay(analysis: HandAnalysis): HandOverlay | undefined {
-  const groups: RankGroup[] = []
   if (analysis.kind === 'meldable' || analysis.kind === 'winning') {
-    groups.push(
-      ...analysis.decomposition.sequences.map((start) => ({
-        kind: 'seq',
-        ranks: [start, start + 1, start + 2],
-      })),
-      ...analysis.decomposition.triplets.map((rank) => ({
-        kind: 'trip',
-        ranks: [rank, rank, rank],
-      })),
-    )
-    if (analysis.decomposition.pair !== undefined) {
-      groups.push({ kind: 'pair', ranks: [analysis.decomposition.pair, analysis.decomposition.pair] })
-    }
+    const groups = decompositionGroups(analysis.decomposition)
+    return groups.length > 0 ? { groups } : undefined
   }
 
-  const highlights = analysis.kind === 'waiting' ? analysis.waitingTiles : undefined
-  if (highlights) return { highlights, groups }
-  return groups.length > 0 ? { groups } : undefined
+  return analysis.kind === 'waiting'
+    ? {
+        targets: waitingTargets(analysis.waitingTiles),
+        groups: [],
+      }
+    : undefined
 }
 
 const handAnalysisInfoPlugin: InfoPlugin = {
@@ -38,4 +32,38 @@ const handAnalysisInfoPlugin: InfoPlugin = {
   ),
 }
 
-export const INFO_PLUGINS: readonly InfoPlugin[] = [handAnalysisInfoPlugin]
+const drawPairGraphInfoPlugin: InfoPlugin = {
+  id: 'draw-pair-graph',
+  label: 'Draw-pair graph',
+  calculate: (counts) => {
+    const graph = calculateDrawPairGraph(counts)
+    return { data: graph, overlay: drawPairOverlay(graph) }
+  },
+  render: (data, counts, { onPreviewOverlayChange }) => (
+    <DrawPairGraphPanel
+      key={counts.join(',')}
+      graph={data as DrawPairGraph}
+      onPreviewOverlayChange={onPreviewOverlayChange}
+    />
+  ),
+}
+
+const controlsInfoPlugin: InfoPlugin = {
+  id: 'controls',
+  label: 'Controls',
+  calculate: () => ({ data: null }),
+  render: () => (
+    <ul className="controls-list">
+      <li>Click or drag a stack to set its height</li>
+      <li>← → switch stacks</li>
+      <li>↑ ↓ / Home / End edit a focused stack</li>
+      <li>Ctrl+Z undo; Ctrl+Y or Ctrl+Shift+Z redo</li>
+    </ul>
+  ),
+}
+
+export const INFO_PLUGINS: readonly InfoPlugin[] = [
+  handAnalysisInfoPlugin,
+  drawPairGraphInfoPlugin,
+  controlsInfoPlugin,
+]

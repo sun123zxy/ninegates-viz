@@ -1,5 +1,11 @@
 .app-shell {
   --sidebar-width: min(25rem, 30vw);
+  --waiting-color: #25844c;
+  --waiting-soft: #e7f6e9;
+  --draw-color: #c28a12;
+  --draw-soft: #fff1b8;
+  --pair-color: #7b4ca0;
+  --pair-soft: #efe5f6;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
   height: 100dvh;
@@ -109,6 +115,7 @@
   --stack-control-height: 1.85rem;
   position: relative;
   width: max-content;
+  padding-top: var(--tile-height);
   display: grid;
   grid-template-columns: repeat(var(--rank-count), var(--tile-width));
   grid-template-rows: repeat(var(--stack-level-count), var(--tile-height)) var(--stack-control-height);
@@ -130,13 +137,28 @@
     rgba(255, 253, 248, 0.28);
 }
 
-.stack-cell-waiting-target {
-  border-color: rgba(37, 132, 76, 0.72);
+.stack-cell-target-waiting {
+  border-color: var(--waiting-color);
   background:
     linear-gradient(rgba(85, 196, 120, 0.38), rgba(85, 196, 120, 0.25)),
     repeating-linear-gradient(135deg, transparent 0 0.28rem, rgba(23, 105, 56, 0.12) 0.28rem 0.56rem),
-    #e7f6e9;
+    var(--waiting-soft);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.58);
+}
+
+.stack-cell-target-draw {
+  border-color: var(--draw-color);
+  background:
+    linear-gradient(rgba(241, 196, 62, 0.42), rgba(241, 196, 62, 0.26)),
+    repeating-linear-gradient(135deg, transparent 0 0.28rem, rgba(151, 102, 8, 0.12) 0.28rem 0.56rem),
+    var(--draw-soft);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.58);
+}
+
+.stack-cell-virtual-target {
+  position: absolute;
+  top: 0;
+  left: calc(var(--rank-index) * (var(--tile-width) + var(--grid-gap)));
 }
 
 .stack-cell-filled .mahjong-tile {
@@ -147,7 +169,7 @@
 .standard-tile-limit {
   position: absolute;
   z-index: 2;
-  top: calc(var(--over-limit-level-count) * var(--tile-height));
+  top: calc((var(--over-limit-level-count) + 1) * var(--tile-height));
   right: 0;
   left: 0;
   border-top: 2px dashed rgba(172, 53, 45, 0.78);
@@ -192,7 +214,7 @@
 }
 
 .decomposition-line-pair {
-  stroke: #7b4ca0;
+  stroke: var(--pair-color);
   filter: drop-shadow(0 0 0.08rem rgba(255, 255, 255, 0.9));
 }
 
@@ -211,7 +233,7 @@
 }
 
 .decomposition-endpoint-pair {
-  fill: #7b4ca0;
+  fill: var(--pair-color);
 }
 
 .stack-column-slider {
@@ -351,10 +373,6 @@
   text-transform: uppercase;
 }
 
-.brand-block .github-link {
-  margin-top: 0;
-}
-
 .order-panel,
 .preset-panel,
 .info-panel {
@@ -363,8 +381,7 @@
 }
 
 .order-panel,
-.preset-panel,
-.sidebar-footer {
+.preset-panel {
   flex: 0 0 auto;
 }
 
@@ -434,8 +451,15 @@
 .history-controls {
   margin-top: 0.55rem;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
   gap: 0.55rem;
+}
+
+.history-controls .github-link {
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .history-controls button {
@@ -516,6 +540,175 @@
   min-height: 0;
 }
 
+.draw-pair-panel {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.draw-pair-graph {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 32 / 35;
+  overflow: visible;
+}
+
+.draw-pair-background {
+  fill: transparent;
+}
+
+.draw-pair-edge {
+  fill: none;
+  stroke: #776b5c;
+  stroke-width: 1.45;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  transition: stroke 100ms ease, stroke-width 100ms ease;
+}
+
+.draw-pair-arrow {
+  fill: #776b5c;
+  pointer-events: none;
+  transition: fill 100ms ease;
+}
+
+.draw-pair-edge.draw-pair-edge-active {
+  stroke: var(--draw-color);
+  stroke-width: 2.2;
+}
+
+.draw-pair-arrow.draw-pair-edge-active {
+  fill: var(--draw-color);
+}
+
+.draw-pair-edge-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+  stroke-linecap: round;
+  cursor: pointer;
+  pointer-events: stroke;
+}
+
+.draw-pair-edge-hit:focus,
+.draw-pair-edge-hit:focus-visible {
+  stroke: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+.draw-pair-node circle {
+  fill: #fffdf8;
+  stroke: #6d604f;
+  stroke-width: 1.5;
+  transition: fill 100ms ease, stroke 100ms ease, stroke-width 100ms ease;
+}
+
+.draw-pair-node text {
+  fill: #382f25;
+  font: 700 12px var(--mono);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.draw-pair-node-waiting circle {
+  fill: var(--waiting-soft);
+  stroke: var(--waiting-color);
+  stroke-width: 2.3;
+}
+
+.draw-pair-node-draw circle {
+  fill: var(--draw-soft);
+  stroke: var(--draw-color);
+  stroke-width: 2.3;
+}
+
+.draw-pair-node-pair circle {
+  fill: var(--pair-soft);
+  stroke: var(--pair-color);
+  stroke-width: 2.3;
+}
+
+.draw-pair-node-draw.draw-pair-node-pair circle {
+  fill: var(--draw-soft);
+  stroke: var(--pair-color);
+  stroke-width: 3;
+}
+
+.draw-pair-group-label {
+  fill: #8b7d6a;
+  font: 700 11px var(--mono);
+  text-anchor: middle;
+}
+
+.draw-pair-summary,
+.draw-pair-selection {
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.controls-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.55rem;
+  color: #5f5344;
+  font: 0.72rem/1.5 var(--mono);
+}
+
+.draw-pair-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-block: 0.65rem;
+  border-block: 1px solid rgba(77, 59, 36, 0.14);
+}
+
+.draw-pair-summary div,
+.draw-pair-selection div {
+  min-width: 0;
+  display: grid;
+  gap: 0.16rem;
+}
+
+.draw-pair-summary dt,
+.draw-pair-selection dt {
+  color: #8b7d6a;
+  font: 0.66rem var(--sans);
+}
+
+.draw-pair-summary dd,
+.draw-pair-selection dd {
+  margin: 0;
+  color: #42382d;
+  overflow-wrap: anywhere;
+  font: 0.72rem/1.45 var(--mono);
+}
+
+.draw-pair-adjacency {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.24rem 0.8rem;
+  color: #5f5344;
+  font: 0.68rem/1.4 var(--mono);
+}
+
+.draw-pair-adjacency div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1.6em 1.3em minmax(0, 1fr);
+}
+
+.draw-pair-adjacency span:last-child {
+  overflow-wrap: anywhere;
+}
+
+.draw-pair-selection {
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(77, 59, 36, 0.14);
+}
+
 .info-list div {
   display: grid;
   gap: 0.18rem;
@@ -536,26 +729,6 @@
 .analysis-warning {
   color: #b52d28;
   font-weight: 700;
-}
-
-.sidebar-footer {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.75rem;
-  color: #9b8d79;
-  font: 0.65rem/1.45 var(--mono);
-}
-
-.sidebar-footer-copy {
-  min-width: 0;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.sidebar-footer .github-link {
-  flex: 0 0 auto;
-  margin: 0;
 }
 
 .github-link {
