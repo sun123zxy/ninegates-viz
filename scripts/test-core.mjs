@@ -244,10 +244,9 @@ try {
   const toolbarMarkup = renderToStaticMarkup(createElement(HandToolbar, {
     presets: [{
       id: 'n1-standard',
-      name: 'Standard',
       n: 1,
+      m: 2,
       counts: [3, 1, 3],
-      waitKind: 'live',
       isStandard: true,
     }],
     counts: [3, 1, 3],
@@ -267,17 +266,16 @@ try {
   const presetDialogMarkup = renderToStaticMarkup(createElement(PresetDialog, {
     presets: [{
       id: 'n1-standard',
-      name: 'Standard',
       n: 1,
+      m: 2,
       counts: [3, 1, 3],
-      waitKind: 'live',
       isStandard: true,
     }],
     onSelect: () => {},
     onClose: () => {},
   }))
   assert.match(presetDialogMarkup, /<dialog class="preset-dialog"/)
-  assert.match(presetDialogMarkup, />Standard</)
+  assert.match(presetDialogMarkup, />m = 2</)
   assert.doesNotMatch(presetDialogMarkup, /Current|aria-pressed|preset-option-active/)
 
   const handPlugin = INFO_PLUGINS.find((plugin) => plugin.id === 'hand-analysis')
