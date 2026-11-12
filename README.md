@@ -1,6 +1,6 @@
 # NinegatesViz
 
-A visualization of the generalized $3n$-rank Mahjong game. Part of the Ninegates project.
+A visualization of the generalized $3n$-rank Mahjong game. Part of the [Ninegates project](https://github.com/sun123zxy/ninegates-lean4).
 
 - easily edit a hand by clicking on the grid
 - meldable / winning hand detection and decomposition
